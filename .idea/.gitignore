@@ -8,3 +8,10 @@
 # Datasource local storage ignored files
 /dataSources/
 /dataSources.local.xml
+/dataSources.xml
+/VisorBot.iml
+/vcs.xml
+/modules.xml
+/misc.xml
+/editor.xml
+/db-forest-config.xml
