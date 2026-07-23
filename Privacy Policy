@@ -1,0 +1,41 @@
+Privacy Policy / Datenschutzerklärung
+
+🇩🇪 Deutsch
+
+1. Übersicht
+Diese Datenschutzerklärung informiert über die Verarbeitung von Daten durch den Discord Bot.
+
+2. Erfasste Daten & Verwendungszweck
+Der Bot speichert und verarbeitet ausschließlich die folgenden Kennungen (IDs), die von Discord bereitgestellt werden:
+* User IDs:Zur Verwaltung von Berechtigungen und Moderationszugriffen.
+* Channel IDs:Zur Konfiguration von Moderations- und Log-Kanälen.
+* Guild (Server) IDs:Zur Zuordnung von serverspezifischen Einstellungen.
+
+*Es werden keine Nachrichteninhalte, Klarnamen oder sonstige personenbezogene Daten gespeichert.*
+
+3. Speicherdauer & Löschung
+Die Daten werden gespeichert, solange der Bot auf dem jeweiligen Server aktiv ist.
+
+Recht auf Löschung:
+Du kannst jederzeit die Auskunft oder Löschung deiner Daten beantragen. Sende dazu eine Direktnachricht (DM) auf Discord an **`@sypex08`**. Nach Prüfung wird die Zuordnung deiner User ID aus der Datenbank entfernt.
+
+---
+
+🇬🇧 English
+
+1. Overview
+This Privacy Policy explains how the Discord bot collects and processes data.
+
+2. Collected Data & Purpose
+The bot only collects and stores Discord IDs:
+* User IDs: Managed for permissions and moderation access control.
+* Channel IDs:Configured for moderation channels and logs.
+* Guild (Server) IDs:Used to store server-specific configurations.
+
+No message contents, personal information, or private messages are recorded or stored.
+
+3. Data Deletion & Contact
+Data is stored as long as the bot remains on the server or until a removal request is filed.
+
+Requesting Data Removal:
+You have the right to request the deletion of your stored data at any time. Please send a Direct Message (DM) on Discord to **`@sypex08`**.
