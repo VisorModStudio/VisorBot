@@ -6,6 +6,7 @@
 #include "Command.h"
 #include "commands/PingCommand.h"
 #include "commands/SetModChannel.h"
+#include "commands/SetUserPermission.h"
 
 int main()
 {
@@ -23,20 +24,33 @@ int main()
     auto set_mod = std::make_unique<SetModChannel>(bot);
     std::string set_mod_name = set_mod->getName();
     commands[set_mod_name] = std::move(set_mod);
+    auto SetUserPerm = std::make_unique<SetUserPermission>(bot);
+    std::string SetUserPerm_name = SetUserPerm->getName();
+    commands[SetUserPerm_name] = std::move(SetUserPerm);
 
-    bot.on_slashcommand([&commands](const dpp::slashcommand_t& event)
+    bot.on_slashcommand([&commands, &bot](const dpp::slashcommand_t& event)
     {
         std::string cmd_name = event.command.get_command_name();
 
         auto it = commands.find(cmd_name);
-        if (it != commands.end())
-        {
-            it->second->execute(event);
-        }
-        else
+
+        if (it == commands.end())
         {
             event.reply("Unknown command: " + cmd_name);
+            return;
         }
+        if (it->second->requiresAdmin())
+        {
+            dpp::snowflake user_id = event.command.get_issuing_user().id;
+            dpp::permission userDiscordPermission = event.command.get_resolved_permission(user_id);
+            if (!bot.userHasAdminPermission(user_id) && !userDiscordPermission.can(dpp::p_administrator))
+            {
+                event.reply("You don´t have permission to use this command");
+                return;
+            }
+        }
+
+        it->second->execute(event);
     });
 
     bot.on_ready([&bot, &commands](const dpp::ready_t& event)
@@ -55,13 +69,13 @@ int main()
                         .add_channel_type(dpp::CHANNEL_TEXT)
                 );
             }
-            if (cmd->getName() == "SetUserPermission")
+            if (cmd->getName() == "setuserpermission")
             {
                 discord_cmd.add_option(
-                    dpp::command_option(dpp::co_user, "User", "The User which permissions should be changed", true )
+                    dpp::command_option(dpp::co_user, "user", "The User which permissions should be changed", true )
                 );
                 discord_cmd.add_option(
-                    dpp::command_option(dpp::co_boolean, "BotPermissions", "If the user should have bot permissions", true)
+                    dpp::command_option(dpp::co_boolean, "botpermissions", "If the user should have bot permissions", true)
                 );
             }
 

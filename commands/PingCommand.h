@@ -16,6 +16,8 @@ class PingCommand : public Command
     std::string getDescription() const override;
     void execute(const dpp::slashcommand_t& event) override;
 
+
+
 };
 
 

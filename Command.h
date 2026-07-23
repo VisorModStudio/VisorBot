@@ -14,4 +14,7 @@ class Command
 
     virtual void execute(const dpp::slashcommand_t& event) = 0;
 
+    virtual bool requiresAdmin() const {return true;}
+
+
 };

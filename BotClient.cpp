@@ -4,7 +4,8 @@
 
 BotClient::BotClient() : dpp::cluster(std::getenv("VISORBOT_TOKEN") ? std::getenv("VISORBOT_TOKEN") : "")
 {
-    if (sqlite3_open("ChannelDB.db", &db) != SQLITE_OK && sqlite3_open("UserPermissionsDB", &db) != SQLITE_OK)
+
+    if (sqlite3_open("VisorBot.db", &db) != SQLITE_OK) //TODO
     {
         std::cerr << "Can't open database: " << sqlite3_errmsg(db) << std::endl;
     }
@@ -26,14 +27,41 @@ BotClient::~BotClient()
 
 void BotClient::InitDatabase()
 {
-
     std::string sql = "CREATE TABLE IF NOT EXISTS ServerConfig ("
                       "GuildID TEXT PRIMARY KEY, "
-                      "ModChannelID TEXT);";
+                      "ModChannelID TEXT);"
+                      "CREATE TABLE IF NOT EXISTS UserHasAdmin("
+                      "UserID TEXT PRIMARY KEY,"
+                      "HasPerms INTEGER);";
 
     char* errMsg = nullptr;
     if (sqlite3_exec(db, sql.c_str(), nullptr, nullptr, &errMsg) != SQLITE_OK) {
         std::cerr << "SQL error: " << errMsg << std::endl;
         sqlite3_free(errMsg);
     }
+}
+
+bool BotClient::userHasAdminPermission(dpp::snowflake user_id)
+{
+    std::string user_str = std::to_string(user_id);
+    std::string query = "SELECT HasPerms FROM UserHasAdmin WHERE UserID = ?";
+    sqlite3_stmt* stmt;
+    bool has_perms = false;
+
+    if (sqlite3_prepare_v2(db, query.c_str(), -1, &stmt, nullptr) == SQLITE_OK)
+    {
+        sqlite3_bind_text(stmt, 1, user_str.c_str(), -1, SQLITE_STATIC);
+
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            has_perms = sqlite3_column_int(stmt, 0) != 0;
+        }
+
+        sqlite3_finalize(stmt);
+    }
+    else
+    {
+        std::cerr << "SQL error: " << sqlite3_errmsg(db)<< std::endl;
+    }
+    return has_perms;
 }
