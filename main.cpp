@@ -55,6 +55,15 @@ int main()
                         .add_channel_type(dpp::CHANNEL_TEXT)
                 );
             }
+            if (cmd->getName() == "SetUserPermission")
+            {
+                discord_cmd.add_option(
+                    dpp::command_option(dpp::co_user, "User", "The User which permissions should be changed", true )
+                );
+                discord_cmd.add_option(
+                    dpp::command_option(dpp::co_boolean, "BotPermissions", "If the user should have bot permissions", true)
+                );
+            }
 
             bot.global_command_create(discord_cmd);
         }
@@ -63,7 +72,7 @@ int main()
     std::cout << "Visor bot online and commands are registered!" << std::endl;
 });
 
-    // Startet die Instanz direkt
+
     bot.start(dpp::st_wait);
 
     return 0;

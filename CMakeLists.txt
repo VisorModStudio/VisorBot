@@ -15,7 +15,11 @@ add_executable(VisorBot main.cpp
         BotClient.cpp
         commands/PingCommand.cpp
         commands/SetModChannel.cpp
-        commands/SetModChannel.h)
+        commands/SetModChannel.h
+        commands/BulkMessageDelete.cpp
+        commands/BulkMessageDelete.h
+        commands/SetUserPermission.cpp
+        commands/SetUserPermission.h)
 
 target_include_directories(VisorBot PRIVATE C:/vcpkg/installed/x64-windows/include)
 

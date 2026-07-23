@@ -4,7 +4,7 @@
 
 BotClient::BotClient() : dpp::cluster(std::getenv("VISORBOT_TOKEN") ? std::getenv("VISORBOT_TOKEN") : "")
 {
-    if (sqlite3_open("ChannelDB.db", &db) != SQLITE_OK)
+    if (sqlite3_open("ChannelDB.db", &db) != SQLITE_OK && sqlite3_open("UserPermissionsDB", &db) != SQLITE_OK)
     {
         std::cerr << "Can't open database: " << sqlite3_errmsg(db) << std::endl;
     }
@@ -26,8 +26,7 @@ BotClient::~BotClient()
 
 void BotClient::InitDatabase()
 {
-    // Hinweis: Deine CLion UI hat "ServerConfig" mit den Spalten "GuildID" und "ModChannelID" erstellt.
-    // Wir passen das SQL-Statement hier an deine tatsächliche DB-Struktur aus CLion an!
+
     std::string sql = "CREATE TABLE IF NOT EXISTS ServerConfig ("
                       "GuildID TEXT PRIMARY KEY, "
                       "ModChannelID TEXT);";
