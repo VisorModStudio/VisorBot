@@ -22,6 +22,6 @@ void PingCommand::execute(const dpp::slashcommand_t& event)
 
     std::string response = "Pong! 🏓 Latency to the Discord-API: " + formatted_latency + "ms";
 
-    event.reply(response);
+    event.reply(dpp::message(response).set_flags(dpp::m_ephemeral));
 }
 

@@ -37,12 +37,12 @@ void SetUserPermission::execute(const dpp::slashcommand_t& event)
         sqlite3_bind_int(stmt, 2, has_perms ? 1 : 0);
 
         if (sqlite3_step(stmt) == SQLITE_DONE) {
-            event.reply("Permissions for <@" + user_str + "> have been set to: " + (has_perms ? "granted" : "revoked"));
+            event.reply(dpp::message("Permissions for <@" + user_str + "> have been set to: " + (has_perms ? "granted" : "revoked")).set_flags(dpp::m_ephemeral));
         } else {
-            event.reply("Error while saving in Database");
+            event.reply(dpp::message("Error while saving in Database").set_flags(dpp::m_ephemeral));
         }
         sqlite3_finalize(stmt);
     } else {
-        event.reply("Internal DB error");
+        event.reply(dpp::message("Internal DB error").set_flags(dpp::m_ephemeral));
     }
 }

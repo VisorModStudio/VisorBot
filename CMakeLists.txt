@@ -19,7 +19,11 @@ add_executable(VisorBot main.cpp
         commands/BulkMessageDelete.cpp
         commands/BulkMessageDelete.h
         commands/SetUserPermission.cpp
-        commands/SetUserPermission.h)
+        commands/SetUserPermission.h
+        EventModule.h
+        ModLogModule.cpp
+        ModLogModule.h
+)
 
 target_include_directories(VisorBot PRIVATE C:/vcpkg/installed/x64-windows/include)
 

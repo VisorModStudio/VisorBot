@@ -31,12 +31,12 @@ void SetModChannel::execute(const dpp::slashcommand_t& event)
         sqlite3_bind_text(stmt, 2, channelID.c_str(), -1, SQLITE_STATIC);
 
         if (sqlite3_step(stmt) == SQLITE_DONE) {
-            event.reply("ModChannel got registered successfully.");
+            event.reply(dpp::message("ModChannel got registered successfully.").set_flags(dpp::m_ephemeral));
         } else {
-            event.reply("Error while saving in Databaste");
+            event.reply(dpp::message("Error while saving in Databaste").set_flags(dpp::m_ephemeral));
         }
     } else {
-        event.reply("Internal DB error");
+        event.reply(dpp::message("Internal DB error").set_flags(dpp::m_ephemeral));
     }
 
     sqlite3_finalize(stmt);

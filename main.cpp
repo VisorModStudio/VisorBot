@@ -45,13 +45,15 @@ int main()
             dpp::permission userDiscordPermission = event.command.get_resolved_permission(user_id);
             if (!bot.userHasAdminPermission(user_id) && !userDiscordPermission.can(dpp::p_administrator))
             {
-                event.reply("You don´t have permission to use this command");
+                event.reply(dpp::message("You don´t have permission to use this command").set_flags( dpp::m_ephemeral));
                 return;
             }
         }
 
         it->second->execute(event);
     });
+
+    
 
     bot.on_ready([&bot, &commands](const dpp::ready_t& event)
 {

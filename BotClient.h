@@ -13,6 +13,8 @@ public:
 
     sqlite3* getDB() const { return db; }
 
+    bool userHasAdminPermission(dpp::snowflake user_id);
+
 private:
     sqlite3* db = nullptr;
     void InitDatabase();
