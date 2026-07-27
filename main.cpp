@@ -4,6 +4,7 @@
 #include <map>
 #include "BotClient.h"
 #include "Command.h"
+#include "ModLogModule.h"
 #include "commands/PingCommand.h"
 #include "commands/SetModChannel.h"
 #include "commands/SetUserPermission.h"
@@ -12,6 +13,9 @@ int main()
 {
 
     BotClient bot;
+
+    ModLogModule modLog(bot, bot.getDB());
+    modLog.registerHandlers();
 
     std::map<std::string, std::unique_ptr<Command>> commands;
 

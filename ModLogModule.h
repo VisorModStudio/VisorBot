@@ -27,6 +27,9 @@ class ModLogModule : public EventModule {
     void onMemberJoin(const dpp::guild_member_add_t& event);
     void onMemberBan(const dpp::guild_ban_add_t& event);
     void onMemberUnban(const dpp::guild_ban_remove_t& event);
+    void onRoleCreated(const dpp::guild_role_create_t& event);
+    void onRoleDeleted(const dpp::guild_role_delete_t& event);
+
 
 
     public:

@@ -5,10 +5,10 @@
 dpp::snowflake ModLogModule::getLogChannelForGuild(dpp::snowflake guild_id)
 {
     dpp::snowflake channel_id = 0;
-    const char* sql = "SELECT ModChannelID FROM guild_settings WHERE GuildID = ?;";
+    const char* sql = "SELECT ModChannelID FROM ServerConfig WHERE GuildID = ?;";
     sqlite3_stmt* stmt;
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK)
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) == SQLITE_OK)
     {
         sqlite3_bind_int64(stmt, 1, static_cast<int64_t>(guild_id));
 
@@ -29,13 +29,25 @@ void ModLogModule::registerHandlers() {
         onMemberBan(event);
     });
 
+    bot.on_guild_role_create([this](const dpp::guild_role_create_t& event) {
+        onRoleCreated(event);
+    });
+
+    bot.on_guild_role_delete([this](const dpp::guild_role_delete_t& event) {
+        onRoleDeleted(event);
+    });
+
     bot.on_message_delete([this](const dpp::message_delete_t& event) {
         onMessageDelete(event);
     });
 
+
+
     /*
     bot.on_guild_member_add([this](const dpp::guild_member_add_t& event) {
         onMemberJoin(event);
+
+        //TODO
     });
     */
 }
@@ -75,7 +87,7 @@ void ModLogModule::onMemberBan(const dpp::guild_ban_add_t& event)
     dpp::snowflake banned_user_id = event.banned.id;
     std::string banned_username = event.banned.username;
 
-    bot.guild_auditlog_get(guild_id, banned_user_id, 22, 0, 0, 1,
+    bot.guild_auditlog_get(guild_id, 0, 22, 0, 0, 1,
         [this, guild_id, banned_user_id, banned_username](const dpp::confirmation_callback_t& callback)
         {
             if (callback.is_error())
@@ -112,9 +124,9 @@ void ModLogModule::onMemberUnban(const dpp::guild_ban_remove_t& event)
     //std::string description = "Unbanned by:" + event.;
 
 
-    //sendLog(guild_id, LogType::Success, title, );
 
-    bot.guild_auditlog_get(guild_id, unbanned_user_id, 23, 0, 0, 1,
+
+    bot.guild_auditlog_get(guild_id, 0, 23, 0, 0, 1,
         [this, guild_id, unbanned_user_id, banned_username](const dpp::confirmation_callback_t& callback)
         {
             if (callback.is_error())
@@ -142,6 +154,75 @@ void ModLogModule::onMemberUnban(const dpp::guild_ban_remove_t& event)
     );
 }
 
+void ModLogModule::onRoleCreated(const dpp::guild_role_create_t& event)
+{
+    dpp::snowflake guild_id = event.creating_guild.id;
+    std::string role_name = event.created.name;
+    dpp::snowflake role_id = event.created.id;
+
+
+    bot.guild_auditlog_get(guild_id, 0, 30, 0, 0, 1,
+        [this, guild_id, role_id, role_name](const dpp::confirmation_callback_t& callback)
+        {
+            if (callback.is_error())
+            {
+                std::cerr << "Audit log fetch failed: " << callback.get_error().message << std::endl;
+                return;
+            }
+
+            dpp::auditlog audit = std::get<dpp::auditlog>(callback.value);
+            std::string created_by = "No staff";
+
+            for (const auto& entry : audit.entries)
+            {
+                if (entry.target_id == role_id)
+                {
+                    created_by = (entry.user_id == 0) ? "No staff" : entry.user_id.str();
+                    break;
+                }
+            }
+
+            std::string title = "Role Created:";
+            std::string description = "Role: <@&" + role_id.str() +">\n" + " By: <@" + created_by + ">" ;
+            sendLog(guild_id, LogType::Success, title, description);
+        }
+    );
+}
+
+void ModLogModule::onRoleDeleted(const dpp::guild_role_delete_t& event)
+{
+    dpp::snowflake guild_id = event.deleting_guild.id;
+    std::string role_name = event.deleted.name;
+    dpp::snowflake role_id = event.deleted.id;
+
+
+    bot.guild_auditlog_get(guild_id, 0, 30, 0, 0, 1,
+        [this, guild_id, role_id, role_name](const dpp::confirmation_callback_t& callback)
+        {
+            if (callback.is_error())
+            {
+                std::cerr << "Audit log fetch failed: " << callback.get_error().message << std::endl;
+                return;
+            }
+
+            dpp::auditlog audit = std::get<dpp::auditlog>(callback.value);
+            std::string deleted_by = "No staff";
+
+            for (const auto& entry : audit.entries)
+            {
+                if (entry.target_id == role_id)
+                {
+                    deleted_by = (entry.user_id == 0) ? "No staff" : entry.user_id.str();
+                    break;
+                }
+            }
+
+            std::string title = "Role Deleted:";
+            std::string description = "Role: " + role_name +"\n" + " By: <@" + deleted_by + ">" ;
+            sendLog(guild_id, LogType::Warning, title, description);
+        }
+    );
+}
 
 
 
