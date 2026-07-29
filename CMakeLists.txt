@@ -23,6 +23,7 @@ add_executable(VisorBot main.cpp
         EventModule.h
         ModLogModule.cpp
         ModLogModule.h
+        AuditLogEvents.h
 )
 
 target_include_directories(VisorBot PRIVATE C:/vcpkg/installed/x64-windows/include)

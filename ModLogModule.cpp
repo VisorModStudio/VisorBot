@@ -2,6 +2,7 @@
 #include <string>
 
 
+
 dpp::snowflake ModLogModule::getLogChannelForGuild(dpp::snowflake guild_id)
 {
     dpp::snowflake channel_id = 0;
@@ -68,6 +69,7 @@ void ModLogModule::registerHandlers() {
     });
     */
 }
+
 std::string objectTypeToString(ObjectType type)
 {
     switch (type)
@@ -76,6 +78,7 @@ std::string objectTypeToString(ObjectType type)
         case ObjectType::Member: return "Member";
         case ObjectType::Role: return "Role";
     }
+    return "Unknown";
 };
 
 void ModLogModule::sendLog(dpp::snowflake guild_id, LogType type, const std::string& title, const std::string& description) {
@@ -99,10 +102,10 @@ void ModLogModule::sendLog(dpp::snowflake guild_id, LogType type, const std::str
     bot.message_create(dpp::message(channel_id, embed));
 }
 
-void ModLogModule::sendLogWithAudit(const dpp::snowflake guild_id, int action_type, const dpp::snowflake& object_id, std::string object_name, std::string title, ObjectType eventObject, LogType logType)
+void ModLogModule::sendLogWithAudit(const dpp::snowflake guild_id, AuditLogEvent action_type, const dpp::snowflake& object_id, std::string title, ObjectType eventObject, LogType logType)
 {
-    bot.guild_auditlog_get(guild_id, 0, action_type, 0, 0, 1,
-        [this, guild_id, object_id, object_name, title, eventObject, logType](const dpp::confirmation_callback_t& callback) mutable
+    bot.guild_auditlog_get(guild_id, 0, static_cast<int>(action_type), 0, 0, 1,
+        [this, guild_id, object_id, title, eventObject, logType](const dpp::confirmation_callback_t& callback) mutable
         {
             if (callback.is_error())
             {
@@ -129,7 +132,7 @@ void ModLogModule::sendLogWithAudit(const dpp::snowflake guild_id, int action_ty
             }
             else if (eventObject == ObjectType::Member)
             {
-                object_id_str = "@" + object_id_str;
+                object_id_str = "<@" + object_id_str + ">";
             }
             else if (eventObject == ObjectType::Role)
             {
@@ -143,66 +146,13 @@ void ModLogModule::sendLogWithAudit(const dpp::snowflake guild_id, int action_ty
     );
 }
 
-void ModLogModule::onMessageDelete(const dpp::message_delete_t& event)
-{
-    dpp::snowflake guild_id = event.guild_id;
-    std::string details = "Channel: <#" + std::to_string(event.channel_id) + ">";
-
-    //TODO
-}
-
-void ModLogModule::onMemberBan(const dpp::guild_ban_add_t& event)
-{
-    dpp::snowflake guild_id = event.banning_guild.id;
-    dpp::snowflake banned_user_id = event.banned.id;
-    std::string banned_username = event.banned.username;
-
-    sendLogWithAudit(guild_id, 22, banned_user_id, banned_username, "Banned User: ", ObjectType::Member, LogType::Alert);
-}
-
-void ModLogModule::onMemberUnban(const dpp::guild_ban_remove_t& event)
-{
-    dpp::snowflake guild_id = event.unbanning_guild.id;
-    dpp::snowflake unbanned_user_id = event.unbanned.id;
-    std::string unbanned_username = event.unbanned.username;
-
-    sendLogWithAudit(guild_id, 23, unbanned_user_id, unbanned_username, "Unbanned User: ", ObjectType::Member, LogType::Warning);
-}
-
-void::ModLogModule::onRoleCreated(const dpp::guild_role_create_t& event)
-{
-    dpp::snowflake guild_id = event.creating_guild.id;
-    dpp::snowflake role_id = event.created.id;
-    std::string role_name = event.created.name;
-
-    sendLogWithAudit(guild_id, 30, role_id, role_name, "Role Created:", ObjectType::Role, LogType::Success);
-}
-
-void ModLogModule::onRoleDeleted(const dpp::guild_role_delete_t& event)
-{
-    dpp::snowflake guild_id = event.deleting_guild.id;
-    std::string role_name = event.deleted.name;
-    dpp::snowflake role_id = event.deleted.id;
-
-    sendLogWithAudit(guild_id ,30, role_id, role_name, "Role Deleted: ", ObjectType::Role, LogType::Warning);
-}
-
 void ModLogModule::onChannelCreated(const dpp::channel_create_t& event)
 {
     dpp::snowflake guild_id = event.creating_guild.id;
     std::string channel_name = event.created.name;
     dpp::snowflake channel_id = event.created.id;
 
-    sendLogWithAudit(guild_id, 10, channel_id, channel_name, "Channel Created: ", ObjectType::Channel, LogType::Success);
-}
-
-void ModLogModule::onChannelDeleted(const dpp::channel_delete_t& event)
-{
-    dpp::snowflake guild_id = event.deleting_guild.id;
-    std::string channel_name = event.deleted.name;
-    dpp::snowflake channel_id = event.deleted.id;
-
-    sendLogWithAudit(guild_id, 12, channel_id, channel_name, "Channel Deleted: ", ObjectType::Channel, LogType::Warning);
+    sendLogWithAudit(guild_id, AuditLogEvent::ChannelCreate, channel_id, "Channel Created: ", ObjectType::Channel, LogType::Success);
 }
 
 void ModLogModule::onChannelUpdated(const dpp::channel_update_t& event)
@@ -211,8 +161,100 @@ void ModLogModule::onChannelUpdated(const dpp::channel_update_t& event)
     std::string channel_name = event.updated.name;
     dpp::snowflake channel_id = event.updated.id;
 
-    sendLogWithAudit(guild_id, 11, channel_id, channel_name, "Channel Updated: ", ObjectType::Channel, LogType::Success);
+    sendLogWithAudit(guild_id, AuditLogEvent::ChannelUpdate, channel_id, "Channel Updated: ", ObjectType::Channel, LogType::Success);
 }
+
+void ModLogModule::onChannelDeleted(const dpp::channel_delete_t& event)
+{
+    dpp::snowflake guild_id = event.deleting_guild.id;
+    std::string channel_name = event.deleted.name;
+    dpp::snowflake channel_id = event.deleted.id;
+
+    sendLogWithAudit(guild_id, AuditLogEvent::ChannelDelete, channel_id, "Channel Deleted: ", ObjectType::Channel, LogType::Warning);
+}
+
+void ModLogModule::onMemberRemove(const dpp::guild_member_remove_t& event)
+{
+    dpp::snowflake guild_id = event.removing_guild.id;
+    dpp::snowflake user_id = event.removed.id;
+    std::string username = event.removed.username;
+
+    bot.guild_auditlog_get(guild_id, 0, static_cast<int>(AuditLogEvent::MemberKick), 0, 0, 5,
+        [this, guild_id, user_id, username](const dpp::confirmation_callback_t& callback)
+        {
+            if (callback.is_error())
+            {
+                std::cerr << "Audit log fetch failed: " << callback.get_error().message << std::endl;
+                return;
+            }
+
+            dpp::auditlog audit = std::get<dpp::auditlog>(callback.value);
+
+            for (const auto& entry : audit.entries)
+            {
+                if (entry.target_id == user_id)
+                {
+                    std::string kicked_by = (entry.user_id == 0) ? "No staff" : entry.user_id.str();
+                    std::string title = "Member Kicked: ";
+                    std::string description = "Member: <@" + user_id.str() + ">\nBy: <@" + kicked_by + ">";
+                    sendLog(guild_id, LogType::Alert, title, description);
+                    return;
+                }
+            }
+        });
+}
+
+void ModLogModule::onMemberBan(const dpp::guild_ban_add_t& event)
+{
+    dpp::snowflake guild_id = event.banning_guild.id;
+    dpp::snowflake banned_user_id = event.banned.id;
+    std::string banned_username = event.banned.username;
+
+    sendLogWithAudit(guild_id, AuditLogEvent::MemberBanAdd, banned_user_id, "Banned User: ", ObjectType::Member, LogType::Alert);
+}
+
+
+void ModLogModule::onMemberUnban(const dpp::guild_ban_remove_t& event)
+{
+    dpp::snowflake guild_id = event.unbanning_guild.id;
+    dpp::snowflake unbanned_user_id = event.unbanned.id;
+    std::string unbanned_username = event.unbanned.username;
+
+    sendLogWithAudit(guild_id, AuditLogEvent::MemberBanRemove, unbanned_user_id, "Unbanned User: ", ObjectType::Member, LogType::Warning);
+}
+
+void ModLogModule::onRoleCreated(const dpp::guild_role_create_t& event)
+{
+    dpp::snowflake guild_id = event.creating_guild.id;
+    dpp::snowflake role_id = event.created.id;
+    std::string role_name = event.created.name;
+
+    sendLogWithAudit(guild_id, AuditLogEvent::RoleCreate, role_id, "Role Created:", ObjectType::Role, LogType::Success);
+}
+
+void ModLogModule::onRoleDeleted(const dpp::guild_role_delete_t& event)
+{
+    dpp::snowflake guild_id = event.deleting_guild.id;
+    std::string role_name = event.deleted.name;
+    dpp::snowflake role_id = event.deleted.id;
+
+    sendLogWithAudit(guild_id ,AuditLogEvent::RoleDelete, role_id, "Role Deleted: ", ObjectType::Role, LogType::Warning);
+}
+
+
+void ModLogModule::onMessageDelete(const dpp::message_delete_t& event)
+{
+    dpp::snowflake guild_id = event.guild_id;
+    std::string details = "Channel: <#" + std::to_string(event.channel_id) + ">";
+
+    //TODO
+}
+
+
+
+
+
+
 
 
 

@@ -4,6 +4,7 @@
 #include <dpp/dpp.h>
 #include <string>
 #include "sqlite3.h"
+#include "AuditLogEvents.h"
 
 enum class LogType
 {
@@ -28,11 +29,11 @@ class ModLogModule : public EventModule {
     dpp::snowflake getLogChannelForGuild(dpp::snowflake guild_id);
 
 
-    void sendLogWithAudit(const dpp::snowflake guild_id, int action_type, const dpp::snowflake& object_id, std::string object_name, std::string title, ObjectType eventObject, LogType logType);
+    void sendLogWithAudit(const dpp::snowflake guild_id, AuditLogEvent action_type, const dpp::snowflake& object_id, std::string title, ObjectType eventObject, LogType logType);
 
     void sendLog(dpp::snowflake guild_id, LogType type, const std::string& title, const std::string& description);
 
-    std::string objectTypeToString(ObjectType type);
+
 
     void onMessageDelete(const dpp::message_delete_t& event);
     void onMemberJoin(const dpp::guild_member_add_t& event);
@@ -43,6 +44,8 @@ class ModLogModule : public EventModule {
     void onChannelCreated(const dpp::channel_create_t& event);
     void onChannelDeleted(const dpp::channel_delete_t& event);
     void onChannelUpdated(const dpp::channel_update_t& event);
+    void onMemberRemove(const dpp::guild_member_remove_t& event);
+
 
 
     public:
