@@ -57,6 +57,24 @@ void ModLogModule::registerHandlers() {
         onChannelUpdated(event);
     });
 
+    bot.on_invite_create([this](const dpp::invite_create_t& event)
+    {
+        onInviteCreated(event);
+    });
+
+    bot.on_invite_delete([this](const dpp::invite_delete_t& event)
+    {
+        onInviteDeleted(event);
+    });
+
+    //TODO Webhook
+
+    bot.on_guild_emojis_update([this](const dpp::guild_emojis_update_t& event)
+    {
+        onGuildEmojisUpdate(event);
+    });
+
+
 
 
 
@@ -74,12 +92,13 @@ std::string objectTypeToString(ObjectType type)
 {
     switch (type)
     {
-        case ObjectType::Channel: return "Channel";
-        case ObjectType::Member: return "Member";
-        case ObjectType::Role: return "Role";
+    case ObjectType::Channel: return "Channel";
+    case ObjectType::Member: return "Member";
+    case ObjectType::Role: return "Role";
+    case ObjectType::Emoji: return "Emoji";
     }
     return "Unknown";
-};
+}
 
 void ModLogModule::sendLog(dpp::snowflake guild_id, LogType type, const std::string& title, const std::string& description) {
     dpp::snowflake channel_id = getLogChannelForGuild(guild_id);
@@ -102,10 +121,12 @@ void ModLogModule::sendLog(dpp::snowflake guild_id, LogType type, const std::str
     bot.message_create(dpp::message(channel_id, embed));
 }
 
-void ModLogModule::sendLogWithAudit(const dpp::snowflake guild_id, AuditLogEvent action_type, const dpp::snowflake& object_id, std::string title, ObjectType eventObject, LogType logType)
+void ModLogModule::sendLogWithAudit(const dpp::snowflake guild_id, AuditLogEvent action_type, const dpp::snowflake& object_id,
+                                     std::string title, ObjectType eventObject, LogType logType,
+                                     std::string precomputed_display)
 {
     bot.guild_auditlog_get(guild_id, 0, static_cast<int>(action_type), 0, 0, 1,
-        [this, guild_id, object_id, title, eventObject, logType](const dpp::confirmation_callback_t& callback) mutable
+        [this, guild_id, object_id, title, eventObject, logType, precomputed_display](const dpp::confirmation_callback_t& callback) mutable
         {
             if (callback.is_error())
             {
@@ -138,9 +159,13 @@ void ModLogModule::sendLogWithAudit(const dpp::snowflake guild_id, AuditLogEvent
             {
                 object_id_str = "<@&" + object_id_str + ">";
             }
+            else if (eventObject == ObjectType::Emoji)
+            {
+                object_id_str = precomputed_display.empty() ? object_id_str : precomputed_display;
+            }
 
             std::string type_str = objectTypeToString(eventObject);
-            std::string description = type_str + ": "+ object_id_str + "\n" + " By: <@" + action_by + ">" ;
+            std::string description = type_str + ": " + object_id_str + "\n By: <@" + action_by + ">";
             sendLog(guild_id, logType, title, description);
         }
     );
@@ -240,6 +265,138 @@ void ModLogModule::onRoleDeleted(const dpp::guild_role_delete_t& event)
 
     sendLogWithAudit(guild_id ,AuditLogEvent::RoleDelete, role_id, "Role Deleted: ", ObjectType::Role, LogType::Warning);
 }
+
+void ModLogModule::onInviteCreated(const dpp::invite_create_t& event)
+{
+    dpp::snowflake guild_id = event.created_invite.guild_id;
+    std::string invite_code = event.created_invite.code;
+    dpp::snowflake inviter_id = event.created_invite.inviter_id;
+
+    sendLog(guild_id, LogType::Success, "Invite Created:", "By: <@" + inviter_id.str() + ">\n" + "Invite Code: " + invite_code);
+}
+
+void ModLogModule::onInviteDeleted(const dpp::invite_delete_t& event)
+{
+    dpp::snowflake guild_id = event.deleted_invite.guild_id;
+    std::string invite_code = event.deleted_invite.code;
+    std::string title = "Invite Deleted: ";
+
+    bot.guild_auditlog_get(guild_id, 0, static_cast<int>(AuditLogEvent::InviteDelete), 0, 0, 1,
+        [this, guild_id, invite_code, title](const dpp::confirmation_callback_t& callback) mutable
+        {
+            if (callback.is_error())
+            {
+                std::cerr << "Audit log fetch failed: " << callback.get_error().message << std::endl;
+                return;
+            }
+
+            dpp::auditlog audit = std::get<dpp::auditlog>(callback.value);
+            std::string action_by = "No staff";
+
+
+            for (const auto& entry : audit.entries)
+            {
+                for (const auto& change : entry.changes)
+                {
+                    if (change.key == "code")
+                    {
+                        std::string cleaned_value = change.old_value;
+
+                        if (cleaned_value.size() >= 2 && cleaned_value.front() == '"' && cleaned_value.back() == '"') //fuck discord
+                        {
+                            cleaned_value = cleaned_value.substr(1, cleaned_value.size() - 2);
+                        }
+
+                        if (cleaned_value == invite_code)
+                        {
+                            action_by = (entry.user_id == 0) ? "No staff" : entry.user_id.str();
+                            break;
+                        }
+                    }
+                }
+            }
+
+
+
+            std::string description =  " By: <@" + action_by + ">" "\n" + "Invite Code: "+ invite_code;
+            sendLog(guild_id, LogType::Warning, title, description);
+        }
+    );
+}
+
+//TODO Webhook
+
+
+void ModLogModule::onGuildEmojisUpdate(const dpp::guild_emojis_update_t& event)
+{
+    dpp::snowflake guild_id = event.updating_guild.id;
+
+    std::set<dpp::snowflake> new_ids;
+    for (const auto& emoji_id : event.emojis)
+    {
+        new_ids.insert(emoji_id);
+    }
+
+    auto it = emoji_cache.find(guild_id);
+    if (it == emoji_cache.end())
+    {
+        bot.guild_emojis_get(guild_id, [this, guild_id](const dpp::confirmation_callback_t& callback)
+        {
+            if (callback.is_error()) return;
+
+            std::map<dpp::snowflake, dpp::emoji> baseline;
+            dpp::emoji_map emojis = std::get<dpp::emoji_map>(callback.value);
+            for (const auto& [emoji_id, emoji] : emojis)
+            {
+                baseline[emoji_id] = emoji;
+            }
+            emoji_cache[guild_id] = baseline;
+        });
+        return;
+    }
+
+    std::map<dpp::snowflake, dpp::emoji>& cached = it->second;
+
+
+    for (const auto& emoji_id : new_ids)
+    {
+        if (cached.find(emoji_id) == cached.end())
+        {
+            bot.guild_emoji_get(guild_id, emoji_id, [this, guild_id, emoji_id](const dpp::confirmation_callback_t& callback)
+            {
+                if (callback.is_error()) return;
+
+                dpp::emoji new_emoji = std::get<dpp::emoji>(callback.value);
+                std::string mention = new_emoji.get_mention();
+
+                sendLogWithAudit(guild_id, AuditLogEvent::EmojiCreate, emoji_id, "Emoji Created: ",
+                                  ObjectType::Emoji, LogType::Success, mention);
+
+                emoji_cache[guild_id][emoji_id] = new_emoji;
+            });
+        }
+    }
+
+
+    for (auto cached_it = cached.begin(); cached_it != cached.end(); )
+    {
+        if (new_ids.find(cached_it->first) == new_ids.end())
+        {
+            const dpp::emoji& removed_emoji = cached_it->second;
+            std::string display_name = (removed_emoji.is_animated() ? "a:" : "") + removed_emoji.name;
+
+            sendLogWithAudit(guild_id, AuditLogEvent::EmojiDelete, cached_it->first, "Emoji Deleted: ",
+                              ObjectType::Emoji, LogType::Warning, display_name);
+
+            cached_it = cached.erase(cached_it);
+        }
+        else
+        {
+            ++cached_it;
+        }
+    }
+}
+
 
 
 void ModLogModule::onMessageDelete(const dpp::message_delete_t& event)

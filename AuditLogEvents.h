@@ -10,7 +10,7 @@ enum class AuditLogEvent
     ChannelOverwriteDelete = 15, //TODO
 
     MemberKick = 20,
-    MemberPrune = 21, //TODO possibly leave out
+    MemberPrune = 21, //leave out?
     MemberBanAdd = 22,
     MemberBanRemove = 23,
     MemberUpdate = 24,
@@ -24,7 +24,7 @@ enum class AuditLogEvent
     RoleDelete = 32,
 
     InviteCreate = 40,
-    InviteUpdate = 41,
+    InviteUpdate = 41,//leave out?
     InviteDelete = 42,
 
     WebhookCreate = 50,

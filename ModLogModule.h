@@ -5,6 +5,7 @@
 #include <string>
 #include "sqlite3.h"
 #include "AuditLogEvents.h"
+#include <set>
 
 enum class LogType
 {
@@ -18,7 +19,9 @@ enum class ObjectType
 {
     Channel,
     Member,
-    Role
+    Role,
+    Emoji
+
 };
 
 class ModLogModule : public EventModule {
@@ -29,7 +32,9 @@ class ModLogModule : public EventModule {
     dpp::snowflake getLogChannelForGuild(dpp::snowflake guild_id);
 
 
-    void sendLogWithAudit(const dpp::snowflake guild_id, AuditLogEvent action_type, const dpp::snowflake& object_id, std::string title, ObjectType eventObject, LogType logType);
+    void sendLogWithAudit(const dpp::snowflake guild_id, AuditLogEvent action_type, const dpp::snowflake& object_id,
+                       std::string title, ObjectType eventObject, LogType logType,
+                       std::string precomputed_display = "");
 
     void sendLog(dpp::snowflake guild_id, LogType type, const std::string& title, const std::string& description);
 
@@ -45,8 +50,12 @@ class ModLogModule : public EventModule {
     void onChannelDeleted(const dpp::channel_delete_t& event);
     void onChannelUpdated(const dpp::channel_update_t& event);
     void onMemberRemove(const dpp::guild_member_remove_t& event);
+    void onInviteCreated(const dpp::invite_create_t& event);
+    void onInviteDeleted(const dpp::invite_delete_t& event);
+    //TODO Webhook
+    void onGuildEmojisUpdate(const dpp::guild_emojis_update_t& event);
 
-
+    std::unordered_map<dpp::snowflake, std::map<dpp::snowflake, dpp::emoji>> emoji_cache;
 
     public:
 
