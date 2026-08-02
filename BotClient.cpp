@@ -28,6 +28,7 @@ BotClient::~BotClient()
     }
 }
 
+
 void BotClient::InitDatabase()
 {
     std::string sql = "CREATE TABLE IF NOT EXISTS ServerConfig ("
@@ -40,6 +41,27 @@ void BotClient::InitDatabase()
     char* errMsg = nullptr;
     if (sqlite3_exec(db, sql.c_str(), nullptr, nullptr, &errMsg) != SQLITE_OK) {
         std::cerr << "SQL error: " << errMsg << std::endl;
+        sqlite3_free(errMsg);
+    }
+
+    addColumnIfNotExists("ServerConfig", "HelpChannelID", "TEXT");
+    addColumnIfNotExists("ServerConfig", "IssueChannelID", "TEXT");
+    addColumnIfNotExists("ServerConfig", "FaqChannelID", "TEXT");
+}
+
+
+void BotClient::addColumnIfNotExists(const std::string& table, const std::string& column, const std::string& type)
+{
+    std::string sql = "ALTER TABLE " + table + " ADD COLUMN " + column + " " + type + ";";
+    char* errMsg = nullptr;
+
+    if (sqlite3_exec(db, sql.c_str(), nullptr, nullptr, &errMsg) != SQLITE_OK)
+    {
+        std::string err_str = errMsg ? errMsg : "";
+        if (err_str.find("duplicate column name") == std::string::npos)
+        {
+            std::cerr << "SQL error (ALTER TABLE " << table << "." << column << "): " << errMsg << std::endl;
+        }
         sqlite3_free(errMsg);
     }
 }

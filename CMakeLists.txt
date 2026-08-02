@@ -24,6 +24,14 @@ add_executable(VisorBot main.cpp
         ModLogModule.cpp
         ModLogModule.h
         AuditLogEvents.h
+        GeminiClient.cpp
+        GeminiClient.h
+        commands/SetHelpChannel.cpp
+        commands/SetHelpChannel.h
+        commands/SetIssueChannel.cpp
+        commands/SetIssueChannel.h
+        commands/SetFaqChannel.cpp
+        commands/SetFaqChannel.h
 )
 
 target_include_directories(VisorBot PRIVATE C:/vcpkg/installed/x64-windows/include)

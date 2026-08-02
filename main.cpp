@@ -8,13 +8,24 @@
 #include "commands/PingCommand.h"
 #include "commands/SetModChannel.h"
 #include "commands/SetUserPermission.h"
+#include "commands/SetHelpChannel.h"
+#include "commands/SetIssueChannel.h"
+#include "commands/SetFaqChannel.h"
+#include "GeminiClient.h"
+
 
 int main()
 {
 
     BotClient bot;
 
-    ModLogModule modLog(bot, bot.getDB());
+    const char* gemini_key_env = std::getenv("GEMINI_API_KEY");
+
+    std::string gemini_key = gemini_key_env ? gemini_key_env : "";
+
+    GeminiClient gemini(bot, gemini_key);
+
+    ModLogModule modLog(bot, bot.getDB(), gemini);
     modLog.registerHandlers();
 
     std::map<std::string, std::unique_ptr<Command>> commands;
@@ -24,13 +35,25 @@ int main()
     std::string ping_name = ping->getName();
     commands[ping_name] = std::move(ping);
 
-
     auto set_mod = std::make_unique<SetModChannel>(bot);
     std::string set_mod_name = set_mod->getName();
     commands[set_mod_name] = std::move(set_mod);
+
     auto SetUserPerm = std::make_unique<SetUserPermission>(bot);
     std::string SetUserPerm_name = SetUserPerm->getName();
     commands[SetUserPerm_name] = std::move(SetUserPerm);
+
+    auto set_help = std::make_unique<SetHelpChannel>(bot);
+    std::string set_help_name = set_help->getName();
+    commands[set_help_name] = std::move(set_help);
+
+    auto set_issue = std::make_unique<SetIssueChannel>(bot);
+    std::string set_issue_name = set_issue->getName();
+    commands[set_issue_name] = std::move(set_issue);
+
+    auto set_faq = std::make_unique<SetFaqChannel>(bot);
+    std::string set_faq_name = set_faq->getName();
+    commands[set_faq_name] = std::move(set_faq);
 
     bot.on_slashcommand([&commands, &bot](const dpp::slashcommand_t& event)
     {
@@ -75,6 +98,7 @@ int main()
                         .add_channel_type(dpp::CHANNEL_TEXT)
                 );
             }
+
             if (cmd->getName() == "setuserpermission")
             {
                 discord_cmd.add_option(
@@ -82,6 +106,33 @@ int main()
                 );
                 discord_cmd.add_option(
                     dpp::command_option(dpp::co_boolean, "botpermissions", "If the user should have bot permissions", true)
+                );
+            }
+
+            if (cmd->getName() == "sethelpchannel")
+            {
+                discord_cmd.add_option(
+                    dpp::command_option(dpp::co_channel, "channel", "The channel where help-relevant content should be sent", true)
+                        .add_channel_type(dpp::CHANNEL_TEXT)
+                        .add_channel_type(dpp::CHANNEL_FORUM)
+                );
+            }
+
+            if (cmd->getName() == "setissuechannel")
+            {
+                discord_cmd.add_option(
+                    dpp::command_option(dpp::co_channel, "channel", "The channel where issue-relevant content should be sent", true)
+                        .add_channel_type(dpp::CHANNEL_TEXT)
+                        .add_channel_type(dpp::CHANNEL_FORUM)
+                );
+            }
+
+            if (cmd->getName() == "setfaqchannel")
+            {
+                discord_cmd.add_option(
+                    dpp::command_option(dpp::co_channel, "channel", "The channel where FAQ-relevant content should be sent", true)
+                        .add_channel_type(dpp::CHANNEL_TEXT)
+                        .add_channel_type(dpp::CHANNEL_FORUM)
                 );
             }
 

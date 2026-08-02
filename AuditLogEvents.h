@@ -2,6 +2,7 @@
 
 enum class AuditLogEvent
 {
+    //DONE
     ChannelCreate = 10,
     ChannelUpdate = 11,
     ChannelDelete = 12,
@@ -39,6 +40,7 @@ enum class AuditLogEvent
     MessageBulkDelete = 73,
     MessagePin = 74,
     MessageUnpin = 75,
+    //DONE
 
     IntegrationCreate = 80,
     IntegrationUpdate = 81,

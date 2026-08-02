@@ -5,7 +5,7 @@
 #include <string>
 #include "sqlite3.h"
 #include "AuditLogEvents.h"
-#include <set>
+#include "GeminiClient.h"
 
 enum class LogType
 {
@@ -28,8 +28,13 @@ class ModLogModule : public EventModule {
     private:
     BotClient& bot;
     sqlite3* db;
+    GeminiClient& gemini;
+
 
     dpp::snowflake getLogChannelForGuild(dpp::snowflake guild_id);
+    dpp::snowflake getIssueChannelForGuild(dpp::snowflake guild_id);
+    dpp::snowflake getHelpChannelForGuild(dpp::snowflake guild_id);
+    dpp::snowflake getFaqChannelForGuild(dpp::snowflake guild_id);
 
 
     void sendLogWithAudit(const dpp::snowflake guild_id, AuditLogEvent action_type, const dpp::snowflake& object_id,
@@ -57,14 +62,17 @@ class ModLogModule : public EventModule {
     void onMessageDelete(const dpp::message_delete_t& event);
     void onMessageCreate(const dpp::message_create_t& event);
     void onMessageBulkDelete(const dpp::message_delete_bulk_t& event);
+    //
+
+    void onThreadCreate(const dpp::thread_create_t& event);
 
     std::unordered_map<dpp::snowflake, std::map<dpp::snowflake, dpp::emoji>> emoji_cache;
     std::unordered_map<dpp::snowflake, std::pair<dpp::snowflake, std::string>> message_cache;
 
     public:
 
-    ModLogModule(BotClient& bot_ref, sqlite3* db_ref)
-        : bot(bot_ref), db(db_ref) {}
+    ModLogModule(BotClient& bot_ref, sqlite3* db_ref, GeminiClient& gemini_ref)
+        : bot(bot_ref), db(db_ref), gemini(gemini_ref) {}
 
 
     void registerHandlers() override;
