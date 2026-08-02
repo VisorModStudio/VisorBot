@@ -1,5 +1,6 @@
 #include "ModLogModule.h"
 #include <string>
+#include <thread>
 
 
 
@@ -31,40 +32,36 @@ void ModLogModule::registerHandlers() {
     });
 
     bot.on_guild_role_create([this](const dpp::guild_role_create_t& event) {
-        onRoleCreated(event);
+        onRoleCreate(event);
     });
 
     bot.on_guild_role_delete([this](const dpp::guild_role_delete_t& event) {
-        onRoleDeleted(event);
-    });
-
-    bot.on_message_delete([this](const dpp::message_delete_t& event) {
-        onMessageDelete(event);
+        onRoleDelete(event);
     });
 
     bot.on_channel_create([this](const dpp::channel_create_t& event)
     {
-        onChannelCreated(event);
+        onChannelCreate(event);
     });
 
     bot.on_channel_delete([this](const dpp::channel_delete_t& event)
     {
-        onChannelDeleted(event);
+        onChannelDelete(event);
     });
 
     bot.on_channel_update([this](const dpp::channel_update_t& event)
     {
-        onChannelUpdated(event);
+        onChannelUpdate(event);
     });
 
     bot.on_invite_create([this](const dpp::invite_create_t& event)
     {
-        onInviteCreated(event);
+        onInviteCreate(event);
     });
 
     bot.on_invite_delete([this](const dpp::invite_delete_t& event)
     {
-        onInviteDeleted(event);
+        onInviteDelete(event);
     });
 
     //TODO Webhook
@@ -74,6 +71,19 @@ void ModLogModule::registerHandlers() {
         onGuildEmojisUpdate(event);
     });
 
+    bot.on_message_delete([this](const dpp::message_delete_t& event) {
+        onMessageDelete(event);
+    });
+
+    bot.on_message_create([this](const dpp::message_create_t& event)
+    {
+        onMessageCreate(event);
+    });
+
+    bot.on_message_delete_bulk([this](const dpp::message_delete_bulk_t& event)
+    {
+        onMessageBulkDelete(event);
+    });
 
 
 
@@ -171,7 +181,7 @@ void ModLogModule::sendLogWithAudit(const dpp::snowflake guild_id, AuditLogEvent
     );
 }
 
-void ModLogModule::onChannelCreated(const dpp::channel_create_t& event)
+void ModLogModule::onChannelCreate(const dpp::channel_create_t& event)
 {
     dpp::snowflake guild_id = event.creating_guild.id;
     std::string channel_name = event.created.name;
@@ -180,7 +190,7 @@ void ModLogModule::onChannelCreated(const dpp::channel_create_t& event)
     sendLogWithAudit(guild_id, AuditLogEvent::ChannelCreate, channel_id, "Channel Created: ", ObjectType::Channel, LogType::Success);
 }
 
-void ModLogModule::onChannelUpdated(const dpp::channel_update_t& event)
+void ModLogModule::onChannelUpdate(const dpp::channel_update_t& event)
 {
     dpp::snowflake guild_id = event.updating_guild.id;
     std::string channel_name = event.updated.name;
@@ -189,7 +199,7 @@ void ModLogModule::onChannelUpdated(const dpp::channel_update_t& event)
     sendLogWithAudit(guild_id, AuditLogEvent::ChannelUpdate, channel_id, "Channel Updated: ", ObjectType::Channel, LogType::Success);
 }
 
-void ModLogModule::onChannelDeleted(const dpp::channel_delete_t& event)
+void ModLogModule::onChannelDelete(const dpp::channel_delete_t& event)
 {
     dpp::snowflake guild_id = event.deleting_guild.id;
     std::string channel_name = event.deleted.name;
@@ -248,7 +258,7 @@ void ModLogModule::onMemberUnban(const dpp::guild_ban_remove_t& event)
     sendLogWithAudit(guild_id, AuditLogEvent::MemberBanRemove, unbanned_user_id, "Unbanned User: ", ObjectType::Member, LogType::Warning);
 }
 
-void ModLogModule::onRoleCreated(const dpp::guild_role_create_t& event)
+void ModLogModule::onRoleCreate(const dpp::guild_role_create_t& event)
 {
     dpp::snowflake guild_id = event.creating_guild.id;
     dpp::snowflake role_id = event.created.id;
@@ -257,7 +267,7 @@ void ModLogModule::onRoleCreated(const dpp::guild_role_create_t& event)
     sendLogWithAudit(guild_id, AuditLogEvent::RoleCreate, role_id, "Role Created:", ObjectType::Role, LogType::Success);
 }
 
-void ModLogModule::onRoleDeleted(const dpp::guild_role_delete_t& event)
+void ModLogModule::onRoleDelete(const dpp::guild_role_delete_t& event)
 {
     dpp::snowflake guild_id = event.deleting_guild.id;
     std::string role_name = event.deleted.name;
@@ -266,7 +276,7 @@ void ModLogModule::onRoleDeleted(const dpp::guild_role_delete_t& event)
     sendLogWithAudit(guild_id ,AuditLogEvent::RoleDelete, role_id, "Role Deleted: ", ObjectType::Role, LogType::Warning);
 }
 
-void ModLogModule::onInviteCreated(const dpp::invite_create_t& event)
+void ModLogModule::onInviteCreate(const dpp::invite_create_t& event)
 {
     dpp::snowflake guild_id = event.created_invite.guild_id;
     std::string invite_code = event.created_invite.code;
@@ -275,7 +285,7 @@ void ModLogModule::onInviteCreated(const dpp::invite_create_t& event)
     sendLog(guild_id, LogType::Success, "Invite Created:", "By: <@" + inviter_id.str() + ">\n" + "Invite Code: " + invite_code);
 }
 
-void ModLogModule::onInviteDeleted(const dpp::invite_delete_t& event)
+void ModLogModule::onInviteDelete(const dpp::invite_delete_t& event)
 {
     dpp::snowflake guild_id = event.deleted_invite.guild_id;
     std::string invite_code = event.deleted_invite.code;
@@ -398,13 +408,116 @@ void ModLogModule::onGuildEmojisUpdate(const dpp::guild_emojis_update_t& event)
 }
 
 
+void ModLogModule::onMessageCreate(const dpp::message_create_t& event)
+{
+    dpp::snowflake msg_id = event.msg.id;
+    std::string msg_content = event.msg.content;
+    dpp::snowflake author_id = event.msg.author.id;
+
+    message_cache.insert({msg_id, {author_id, msg_content}});
+}
 
 void ModLogModule::onMessageDelete(const dpp::message_delete_t& event)
 {
     dpp::snowflake guild_id = event.guild_id;
-    std::string details = "Channel: <#" + std::to_string(event.channel_id) + ">";
+    dpp::snowflake msg_id = event.id;
+    dpp::snowflake channel_id = event.channel_id;
 
-    //TODO
+
+
+    auto it = message_cache.find(msg_id);
+    std::string msg_content;
+    dpp::snowflake author_id;
+
+    if (it != message_cache.end())
+    {
+        author_id = it->second.first;
+        msg_content = it->second.second;
+
+        sendLog(guild_id, LogType::Warning, "Message Deleted: ",
+                "Content: " + msg_content + "\nSent By: <@" + author_id.str() + ">\nChannel: <#" + channel_id.str() + ">" );
+
+    }
+    else
+    {
+        std::cerr << "Msg not cached";
+    }
+
+}
+
+void ModLogModule::onMessageBulkDelete(const dpp::message_delete_bulk_t& event)
+{
+    dpp::snowflake guild_id = event.deleting_guild.id;
+    dpp::snowflake channel_id = event.deleting_channel.id;
+    std::vector<dpp::snowflake> msg_list = event.deleted;
+
+    dpp::snowflake log_channel_id = getLogChannelForGuild(guild_id);
+    if (log_channel_id == 0) return;
+
+    dpp::embed current_embed = dpp::embed()
+        .set_title("Bulk Delete: " + std::to_string(msg_list.size()) + " Messages in <#" + channel_id.str() + ">")
+        .set_color(dpp::colors::orange)
+        .set_timestamp(time(nullptr));
+
+    int field_count = 0;
+    size_t char_count = 0;
+    int not_cached = 0;
+
+    auto flush_embed = [&]()
+    {
+        if (field_count > 0)
+        {
+            bot.message_create(dpp::message(log_channel_id, current_embed));
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+        }
+        current_embed = dpp::embed()
+            .set_title("Bulk Delete (Continue)")
+            .set_color(dpp::colors::orange)
+            .set_timestamp(time(nullptr));
+        field_count = 0;
+        char_count = 0;
+    };
+
+    for (const dpp::snowflake& msg_id : msg_list)
+    {
+        auto it = message_cache.find(msg_id);
+        if (it == message_cache.end())
+        {
+            not_cached++;
+            continue;
+        }
+
+        dpp::snowflake author_id = it->second.first;
+        std::string content = it->second.second.empty() ? "*(kein Text)*" : it->second.second;
+
+        size_t offset = 0;
+        do
+        {
+            std::string chunk_text = content.substr(offset, 900);   // etwas mehr Puffer wegen zusätzlichem Label-Text im Value
+            offset += 900;
+
+            std::string field_name = "Message";                      // neutral, keine Mentions hier -> egal, dass es fett ist
+            std::string field_value = "Sent By: <@" + author_id.str() + ">\nContent: " + chunk_text;   // Mention + Content BEIDE im Value
+
+            if (field_count >= 25 || char_count + field_value.size() + field_name.size() > 5800)
+            {
+                flush_embed();
+            }
+
+            current_embed.add_field(field_name, field_value);
+            field_count++;
+            char_count += field_value.size() + field_name.size();
+
+        } while (offset < content.size());
+    }
+
+    if (not_cached > 0)
+    {
+        current_embed.add_field("Not Cached", std::to_string(not_cached) + "Message(s) could not be reconstructed");
+        field_count++;
+    }
+
+    flush_embed();
 }
 
 

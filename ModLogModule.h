@@ -40,22 +40,26 @@ class ModLogModule : public EventModule {
 
 
 
-    void onMessageDelete(const dpp::message_delete_t& event);
+
     void onMemberJoin(const dpp::guild_member_add_t& event);
     void onMemberBan(const dpp::guild_ban_add_t& event);
     void onMemberUnban(const dpp::guild_ban_remove_t& event);
-    void onRoleCreated(const dpp::guild_role_create_t& event);
-    void onRoleDeleted(const dpp::guild_role_delete_t& event);
-    void onChannelCreated(const dpp::channel_create_t& event);
-    void onChannelDeleted(const dpp::channel_delete_t& event);
-    void onChannelUpdated(const dpp::channel_update_t& event);
+    void onRoleCreate(const dpp::guild_role_create_t& event);
+    void onRoleDelete(const dpp::guild_role_delete_t& event);
+    void onChannelCreate(const dpp::channel_create_t& event);
+    void onChannelDelete(const dpp::channel_delete_t& event);
+    void onChannelUpdate(const dpp::channel_update_t& event);
     void onMemberRemove(const dpp::guild_member_remove_t& event);
-    void onInviteCreated(const dpp::invite_create_t& event);
-    void onInviteDeleted(const dpp::invite_delete_t& event);
+    void onInviteCreate(const dpp::invite_create_t& event);
+    void onInviteDelete(const dpp::invite_delete_t& event);
     //TODO Webhook
     void onGuildEmojisUpdate(const dpp::guild_emojis_update_t& event);
+    void onMessageDelete(const dpp::message_delete_t& event);
+    void onMessageCreate(const dpp::message_create_t& event);
+    void onMessageBulkDelete(const dpp::message_delete_bulk_t& event);
 
     std::unordered_map<dpp::snowflake, std::map<dpp::snowflake, dpp::emoji>> emoji_cache;
+    std::unordered_map<dpp::snowflake, std::pair<dpp::snowflake, std::string>> message_cache;
 
     public:
 

@@ -2,7 +2,10 @@
 #include <iostream>
 #include <cstdlib>
 
-BotClient::BotClient() : dpp::cluster(std::getenv("VISORBOT_TOKEN") ? std::getenv("VISORBOT_TOKEN") : "")
+BotClient::BotClient() : dpp::cluster(
+    std::getenv("VISORBOT_TOKEN") ? std::getenv("VISORBOT_TOKEN") : "",
+    dpp::i_default_intents | dpp::i_message_content | dpp::i_guild_members
+)
 {
 
     if (sqlite3_open("VisorBot.db", &db) != SQLITE_OK) //TODO
