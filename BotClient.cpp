@@ -47,6 +47,7 @@ void BotClient::InitDatabase()
     addColumnIfNotExists("ServerConfig", "HelpChannelID", "TEXT");
     addColumnIfNotExists("ServerConfig", "IssueChannelID", "TEXT");
     addColumnIfNotExists("ServerConfig", "FaqChannelID", "TEXT");
+    addColumnIfNotExists("ServerConfig", "IssueResponseChannelID", "TEXT");
 }
 
 

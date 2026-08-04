@@ -12,6 +12,7 @@
 #include "commands/SetIssueChannel.h"
 #include "commands/SetFaqChannel.h"
 #include "GeminiClient.h"
+#include "commands/SetIssueResponseChannel.h"
 
 
 int main()
@@ -51,9 +52,14 @@ int main()
     std::string set_issue_name = set_issue->getName();
     commands[set_issue_name] = std::move(set_issue);
 
+    auto set_issueresponse = std::make_unique<SetIssueResponseChannel>(bot);
+    std::string set_issueresponse_name = set_issueresponse->getName();
+    commands[set_issueresponse_name] = std::move(set_issueresponse);
+
     auto set_faq = std::make_unique<SetFaqChannel>(bot);
     std::string set_faq_name = set_faq->getName();
     commands[set_faq_name] = std::move(set_faq);
+
 
     bot.on_slashcommand([&commands, &bot](const dpp::slashcommand_t& event)
     {
@@ -122,6 +128,15 @@ int main()
             {
                 discord_cmd.add_option(
                     dpp::command_option(dpp::co_channel, "channel", "The channel where issue-relevant content should be sent", true)
+                        .add_channel_type(dpp::CHANNEL_TEXT)
+                        .add_channel_type(dpp::CHANNEL_FORUM)
+                );
+            }
+
+            if (cmd->getName() == "setissueresponsechannel")
+            {
+                discord_cmd.add_option(
+                    dpp::command_option(dpp::co_channel, "channel", "The channel where the bot should post the summarized issues", true)
                         .add_channel_type(dpp::CHANNEL_TEXT)
                         .add_channel_type(dpp::CHANNEL_FORUM)
                 );

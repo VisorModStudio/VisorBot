@@ -11,7 +11,7 @@ std::string SetHelpChannel::getName() const
 
 std::string SetHelpChannel::getDescription() const
 {
-    return "Sets the channel where the bot posts help-relevant stuff";
+    return "Sets the channel where the bot replies to user questions";
 }
 
 void SetHelpChannel::execute(const dpp::slashcommand_t& event)

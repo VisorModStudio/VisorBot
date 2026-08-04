@@ -11,7 +11,7 @@ std::string SetIssueChannel::getName() const
 
 std::string SetIssueChannel::getDescription() const
 {
-    return "Sets the channel where the bot posts issue-relevant stuff";
+    return "Sets the channel where users post issues for the ai to summarize";
 }
 
 void SetIssueChannel::execute(const dpp::slashcommand_t& event)

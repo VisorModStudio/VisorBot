@@ -15,7 +15,7 @@ void GeminiClient::generate_text(const std::string& prompt, std::function<void(s
 
     std::string url = "https://api.groq.com/openai/v1/chat/completions";
 
-    // 2. JSON-Format für Groq / Llama
+
     json body = {
         {"model", "llama-3.3-70b-versatile"},
         {"messages", json::array({

@@ -32,6 +32,8 @@ add_executable(VisorBot main.cpp
         commands/SetIssueChannel.h
         commands/SetFaqChannel.cpp
         commands/SetFaqChannel.h
+        commands/SetIssueResponseChannel.cpp
+        commands/SetIssueResponseChannel.h
 )
 
 target_include_directories(VisorBot PRIVATE C:/vcpkg/installed/x64-windows/include)
