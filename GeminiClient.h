@@ -13,6 +13,8 @@ class GeminiClient
 
     void summarize_post(const std::string& title, const std::string& content, std::function<void(std::string)> callback);
     void answer_faq(const std::string& user_question, const std::string& faq_data, std::function<void(std::string)> callback);
+    void custom_request(const std::string& request,std::function<void(std::string)> callback);
+
 
     private:
     dpp::cluster& m_bot;

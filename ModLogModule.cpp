@@ -65,6 +65,26 @@ dpp::snowflake ModLogModule::getIssueChannelForGuild(dpp::snowflake guild_id)
     return channel_id;
 }
 
+dpp::snowflake ModLogModule::getIssueResponseChannelForGuild(dpp::snowflake guild_id)
+{
+    dpp::snowflake channel_id = 0;
+    const char* sql = "SELECT IssueResponseChannelID FROM ServerConfig WHERE GuildID = ?;";
+    sqlite3_stmt* stmt;
+
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) == SQLITE_OK)
+    {
+        sqlite3_bind_int64(stmt, 1, static_cast<int64_t>(guild_id));
+
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            channel_id = static_cast<dpp::snowflake>(sqlite3_column_int64(stmt, 0));
+        }
+    }
+    sqlite3_finalize(stmt);
+
+    return channel_id;
+}
+
 dpp::snowflake ModLogModule::getFaqChannelForGuild(dpp::snowflake guild_id)
 {
     dpp::snowflake channel_id = 0;
@@ -86,6 +106,12 @@ dpp::snowflake ModLogModule::getFaqChannelForGuild(dpp::snowflake guild_id)
 }
 
 void ModLogModule::registerHandlers() {
+
+    bot.on_button_click([this](const dpp::button_click_t& event)
+    {
+        onButtonClick(event);
+    });
+
     bot.on_guild_ban_add([this](const dpp::guild_ban_add_t& event)
     {
         onMemberBan(event);
@@ -161,6 +187,37 @@ void ModLogModule::registerHandlers() {
         //TODO
     });
     */
+}
+
+void ModLogModule::onButtonClick(const dpp::button_click_t& event)
+{
+    std::string custom_id = event.custom_id;
+    //TODO maybe add AI + message context
+
+    size_t sep = custom_id.find(':');
+    if (sep == std::string::npos) return;
+
+    std::string action = custom_id.substr(0, sep);
+    dpp::snowflake thread_id = std::stoull(custom_id.substr(sep + 1));
+
+    dpp::embed embed = dpp::embed();
+
+    if (action == "info_ask_button")
+    {
+        embed.set_color(dpp::colors::blurple)
+        .set_title("Information Request")
+        .set_description("Please send more information about the problem like mods list and other info that might help to find the cause");
+    }
+    else if (action == "log_ask_button")
+    {
+        embed.set_color(dpp::colors::blurple)
+        .set_title("Game Log Request")
+        .set_description("Please Post your Game Log! You can find it here: ``` YourMinecraftDirectory/logs/latest.log```");
+
+    }
+
+    dpp::message msg(thread_id, embed);
+    bot.message_create(msg);
 }
 
 std::string objectTypeToString(ObjectType type)
@@ -590,10 +647,13 @@ void ModLogModule::onThreadCreate(const dpp::thread_create_t& event)
 {
 
     dpp::snowflake thread_id = event.created.id;
+    dpp::snowflake thread_creator = event.created.owner_id;
     dpp::snowflake parent_id = event.created.parent_id;
     dpp::snowflake guild_id = event.created.guild_id;
     dpp::snowflake help_id = getHelpChannelForGuild(guild_id);
     dpp::snowflake issue_id = getIssueChannelForGuild(guild_id);
+
+    dpp::snowflake response_channel_id = getIssueResponseChannelForGuild(guild_id);
 
 
     if (processed_threads.contains(thread_id)) {
@@ -606,7 +666,7 @@ void ModLogModule::onThreadCreate(const dpp::thread_create_t& event)
 
     if (parent_id == issue_id)
     {
-        bot.message_get(thread_id, thread_id, [this, thread_id, thread_title](const dpp::confirmation_callback_t& cb) {
+        bot.message_get(thread_id, thread_id, [this, thread_id, thread_title, thread_creator, response_channel_id](const dpp::confirmation_callback_t& cb) {
             if (cb.is_error()) {
 
                 processed_threads.erase(thread_id);
@@ -615,13 +675,35 @@ void ModLogModule::onThreadCreate(const dpp::thread_create_t& event)
 
             auto msg = std::get<dpp::message>(cb.value);
 
-            gemini.summarize_post(thread_title, msg.content, [this, thread_id](std::string summary) {
+            gemini.summarize_post(thread_title, msg.content, [this, thread_id, thread_creator, response_channel_id](std::string summary) {
                 dpp::embed embed = dpp::embed()
                     .set_color(dpp::colors::blurple)
-                    .set_title("AI-Summary")
-                    .set_description(summary);
+                    .set_title("New Issue")
+                    .set_description(summary + "\n Created By: <@" + thread_creator.str() + ">\n Post: <#" + thread_id.str() + ">");
 
-                bot.message_create(dpp::message(thread_id, embed));
+                dpp::message msg(response_channel_id, embed);
+
+                msg.add_component(
+                    dpp::component()
+                        .add_component(
+                            dpp::component()
+                                .set_label("Ask for Information")
+                                .set_type(dpp::cot_button)
+                                .set_emoji("❔")
+                                .set_style(dpp::cos_primary)
+                                .set_id("info_ask_button:" + thread_id.str())
+                        )
+                        .add_component(
+                            dpp::component()
+                                .set_label("Ask for game log")
+                                .set_type(dpp::cot_button)
+                                .set_emoji("❓")
+                                .set_style(dpp::cos_primary)
+                                .set_id("log_ask_button:" + thread_id.str())
+                        )
+                );
+
+                bot.message_create(msg);
             });
         });
     }

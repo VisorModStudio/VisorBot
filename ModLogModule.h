@@ -33,6 +33,7 @@ class ModLogModule : public EventModule {
 
     dpp::snowflake getLogChannelForGuild(dpp::snowflake guild_id);
     dpp::snowflake getIssueChannelForGuild(dpp::snowflake guild_id);
+    dpp::snowflake getIssueResponseChannelForGuild(dpp::snowflake guild_id);
     dpp::snowflake getHelpChannelForGuild(dpp::snowflake guild_id);
     dpp::snowflake getFaqChannelForGuild(dpp::snowflake guild_id);
 
@@ -44,7 +45,7 @@ class ModLogModule : public EventModule {
     void sendLog(dpp::snowflake guild_id, LogType type, const std::string& title, const std::string& description);
 
 
-
+    void onButtonClick(const dpp::button_click_t& event);
 
     void onMemberJoin(const dpp::guild_member_add_t& event);
     void onMemberBan(const dpp::guild_ban_add_t& event);
