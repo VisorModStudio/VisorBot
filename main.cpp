@@ -10,7 +10,7 @@
 #include "commands/SetUserPermission.h"
 #include "commands/SetHelpChannel.h"
 #include "commands/SetIssueChannel.h"
-#include "commands/SetFaqChannel.h"
+#include "commands/SetChannel.h"
 #include "GeminiClient.h"
 #include "commands/SetIssueResponseChannel.h"
 
@@ -19,6 +19,7 @@ int main()
 {
 
     BotClient bot;
+
 
     const char* gemini_key_env = std::getenv("GEMINI_API_KEY");
 
@@ -36,29 +37,13 @@ int main()
     std::string ping_name = ping->getName();
     commands[ping_name] = std::move(ping);
 
-    auto set_mod = std::make_unique<SetModChannel>(bot);
-    std::string set_mod_name = set_mod->getName();
-    commands[set_mod_name] = std::move(set_mod);
-
     auto SetUserPerm = std::make_unique<SetUserPermission>(bot);
     std::string SetUserPerm_name = SetUserPerm->getName();
     commands[SetUserPerm_name] = std::move(SetUserPerm);
 
-    auto set_help = std::make_unique<SetHelpChannel>(bot);
-    std::string set_help_name = set_help->getName();
-    commands[set_help_name] = std::move(set_help);
-
-    auto set_issue = std::make_unique<SetIssueChannel>(bot);
-    std::string set_issue_name = set_issue->getName();
-    commands[set_issue_name] = std::move(set_issue);
-
-    auto set_issueresponse = std::make_unique<SetIssueResponseChannel>(bot);
-    std::string set_issueresponse_name = set_issueresponse->getName();
-    commands[set_issueresponse_name] = std::move(set_issueresponse);
-
-    auto set_faq = std::make_unique<SetFaqChannel>(bot);
-    std::string set_faq_name = set_faq->getName();
-    commands[set_faq_name] = std::move(set_faq);
+    auto set_channel = std::make_unique<SetChannel>(bot);
+    std::string set_channel_name = set_channel->getName();
+    commands[set_channel_name] = std::move(set_channel);
 
 
     bot.on_slashcommand([&commands, &bot](const dpp::slashcommand_t& event)
@@ -97,14 +82,6 @@ int main()
             dpp::slashcommand discord_cmd(cmd->getName(), cmd->getDescription(), bot.me.id);
 
 
-            if (cmd->getName() == "setmodchannel")
-            {
-                discord_cmd.add_option(
-                    dpp::command_option(dpp::co_channel, "channel", "The channel where admin logs should be sent", true)
-                        .add_channel_type(dpp::CHANNEL_TEXT)
-                );
-            }
-
             if (cmd->getName() == "setuserpermission")
             {
                 discord_cmd.add_option(
@@ -115,39 +92,22 @@ int main()
                 );
             }
 
-            if (cmd->getName() == "sethelpchannel")
+            if (cmd->getName() == "setchannel")
             {
                 discord_cmd.add_option(
-                    dpp::command_option(dpp::co_channel, "channel", "The channel where help-relevant content should be sent", true)
+                    dpp::command_option(dpp::co_channel, "channel", "Where the channel should be set", true)
                         .add_channel_type(dpp::CHANNEL_TEXT)
                         .add_channel_type(dpp::CHANNEL_FORUM)
                 );
-            }
 
-            if (cmd->getName() == "setissuechannel")
-            {
                 discord_cmd.add_option(
-                    dpp::command_option(dpp::co_channel, "channel", "The channel where issue-relevant content should be sent", true)
-                        .add_channel_type(dpp::CHANNEL_TEXT)
-                        .add_channel_type(dpp::CHANNEL_FORUM)
-                );
-            }
 
-            if (cmd->getName() == "setissueresponsechannel")
-            {
-                discord_cmd.add_option(
-                    dpp::command_option(dpp::co_channel, "channel", "The channel where the bot should post the summarized issues", true)
-                        .add_channel_type(dpp::CHANNEL_TEXT)
-                        .add_channel_type(dpp::CHANNEL_FORUM)
-                );
-            }
-
-            if (cmd->getName() == "setfaqchannel")
-            {
-                discord_cmd.add_option(
-                    dpp::command_option(dpp::co_channel, "channel", "The channel where FAQ-relevant content should be sent", true)
-                        .add_channel_type(dpp::CHANNEL_TEXT)
-                        .add_channel_type(dpp::CHANNEL_FORUM)
+                    dpp::command_option(dpp::co_string, "channeltype", "The Channel type to be changed", true)
+                        .add_choice(dpp::command_option_choice("ModChannel", "Mod_Channel"))
+                        .add_choice(dpp::command_option_choice("HelpChannel", "Help_Channel"))
+                        .add_choice(dpp::command_option_choice("IssueChannel", "Issue_Channel"))
+                        .add_choice(dpp::command_option_choice("FaqChannel", "Faq_Channel"))
+                        .add_choice(dpp::command_option_choice("IssueResponseChannel", "IssueRspns_Channel"))
                 );
             }
 

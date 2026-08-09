@@ -2,7 +2,7 @@
 #include <dpp/dpp.h>
 #include "../Command.h"
 
-class SetHelpChannel : public Command
+class SetChannel : public Command
 {
 private:
 
@@ -10,7 +10,7 @@ private:
 
 public:
 
-    explicit SetHelpChannel(dpp::cluster& bot_ref) : bot(bot_ref) {}
+    explicit SetChannel(dpp::cluster& bot_ref) : bot(bot_ref) {}
 
     std::string getName() const override;
     std::string getDescription() const override;

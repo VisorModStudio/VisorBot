@@ -1,5 +1,6 @@
 #include "GeminiClient.h"
 #include "nlohmann/json.hpp"
+#include "cpr/cpr.h"
 
 using json = nlohmann::json;
 
@@ -77,4 +78,24 @@ void GeminiClient::custom_request(const std::string& request, std::function<void
                          + request + "\n";
 
     generate_text(prompt, callback);
+}
+
+std::string GeminiClient::fetch_website_info(const std::string& url)
+{
+    cpr::Response r = cpr::Get(cpr::Url{url});
+    std::string content;
+
+    if (r.status_code == 200)
+    {
+        std::cout << "Successfully loaded\n\n";
+        std::string content = r.text;
+        std::cout << r.text << std::endl;
+
+    }
+    else
+    {
+        std::cerr << "Error while loading the website: " << r.status_code << std::endl;
+    }
+
+    return content;
 }

@@ -5,13 +5,16 @@
 
 
 
-dpp::snowflake ModLogModule::getLogChannelForGuild(dpp::snowflake guild_id)
+dpp::snowflake ModLogModule::getColumnFromServerConfig(dpp::snowflake guild_id, std::string column)
 {
     dpp::snowflake channel_id = 0;
-    const char* sql = "SELECT ModChannelID FROM ServerConfig WHERE GuildID = ?;";
-    sqlite3_stmt* stmt;
 
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) == SQLITE_OK)
+
+    std::string sql = "SELECT " + column + " FROM ServerConfig WHERE GuildID = ?;";
+    sqlite3_stmt* stmt = nullptr;
+
+
+    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) == SQLITE_OK)
     {
         sqlite3_bind_int64(stmt, 1, static_cast<int64_t>(guild_id));
 
@@ -20,90 +23,13 @@ dpp::snowflake ModLogModule::getLogChannelForGuild(dpp::snowflake guild_id)
             channel_id = static_cast<dpp::snowflake>(sqlite3_column_int64(stmt, 0));
         }
     }
+
+
     sqlite3_finalize(stmt);
 
     return channel_id;
 }
 
-dpp::snowflake ModLogModule::getHelpChannelForGuild(dpp::snowflake guild_id)
-{
-    dpp::snowflake channel_id = 0;
-    const char* sql = "SELECT HelpChannelID FROM ServerConfig WHERE GuildID = ?;";
-    sqlite3_stmt* stmt;
-
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) == SQLITE_OK)
-    {
-        sqlite3_bind_int64(stmt, 1, static_cast<int64_t>(guild_id));
-
-        if (sqlite3_step(stmt) == SQLITE_ROW)
-        {
-            channel_id = static_cast<dpp::snowflake>(sqlite3_column_int64(stmt, 0));
-        }
-    }
-    sqlite3_finalize(stmt);
-
-    return channel_id;
-}
-
-dpp::snowflake ModLogModule::getIssueChannelForGuild(dpp::snowflake guild_id)
-{
-    dpp::snowflake channel_id = 0;
-    const char* sql = "SELECT IssueChannelID FROM ServerConfig WHERE GuildID = ?;";
-    sqlite3_stmt* stmt;
-
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) == SQLITE_OK)
-    {
-        sqlite3_bind_int64(stmt, 1, static_cast<int64_t>(guild_id));
-
-        if (sqlite3_step(stmt) == SQLITE_ROW)
-        {
-            channel_id = static_cast<dpp::snowflake>(sqlite3_column_int64(stmt, 0));
-        }
-    }
-    sqlite3_finalize(stmt);
-
-    return channel_id;
-}
-
-dpp::snowflake ModLogModule::getIssueResponseChannelForGuild(dpp::snowflake guild_id)
-{
-    dpp::snowflake channel_id = 0;
-    const char* sql = "SELECT IssueResponseChannelID FROM ServerConfig WHERE GuildID = ?;";
-    sqlite3_stmt* stmt;
-
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) == SQLITE_OK)
-    {
-        sqlite3_bind_int64(stmt, 1, static_cast<int64_t>(guild_id));
-
-        if (sqlite3_step(stmt) == SQLITE_ROW)
-        {
-            channel_id = static_cast<dpp::snowflake>(sqlite3_column_int64(stmt, 0));
-        }
-    }
-    sqlite3_finalize(stmt);
-
-    return channel_id;
-}
-
-dpp::snowflake ModLogModule::getFaqChannelForGuild(dpp::snowflake guild_id)
-{
-    dpp::snowflake channel_id = 0;
-    const char* sql = "SELECT FaqChannelID FROM ServerConfig WHERE GuildID = ?;";
-    sqlite3_stmt* stmt;
-
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) == SQLITE_OK)
-    {
-        sqlite3_bind_int64(stmt, 1, static_cast<int64_t>(guild_id));
-
-        if (sqlite3_step(stmt) == SQLITE_ROW)
-        {
-            channel_id = static_cast<dpp::snowflake>(sqlite3_column_int64(stmt, 0));
-        }
-    }
-    sqlite3_finalize(stmt);
-
-    return channel_id;
-}
 
 void ModLogModule::registerHandlers() {
 
@@ -193,6 +119,7 @@ void ModLogModule::onButtonClick(const dpp::button_click_t& event)
 {
     std::string custom_id = event.custom_id;
     //TODO maybe add AI + message context
+    //TODO Pheonix's Request: Add FAQ context for automation of most common issues
 
     size_t sep = custom_id.find(':');
     if (sep == std::string::npos) return;
@@ -233,7 +160,7 @@ std::string objectTypeToString(ObjectType type)
 }
 
 void ModLogModule::sendLog(dpp::snowflake guild_id, LogType type, const std::string& title, const std::string& description) {
-    dpp::snowflake channel_id = getLogChannelForGuild(guild_id);
+    dpp::snowflake channel_id = getColumnFromServerConfig(guild_id, "ModChannelID");
 
     if (channel_id == 0) return;
 
@@ -573,7 +500,7 @@ void ModLogModule::onMessageBulkDelete(const dpp::message_delete_bulk_t& event)
     dpp::snowflake channel_id = event.deleting_channel.id;
     std::vector<dpp::snowflake> msg_list = event.deleted;
 
-    dpp::snowflake log_channel_id = getLogChannelForGuild(guild_id);
+    dpp::snowflake log_channel_id = getColumnFromServerConfig(guild_id, "ModChannelID");
     if (log_channel_id == 0) return;
 
     dpp::embed current_embed = dpp::embed()
@@ -650,10 +577,10 @@ void ModLogModule::onThreadCreate(const dpp::thread_create_t& event)
     dpp::snowflake thread_creator = event.created.owner_id;
     dpp::snowflake parent_id = event.created.parent_id;
     dpp::snowflake guild_id = event.created.guild_id;
-    dpp::snowflake help_id = getHelpChannelForGuild(guild_id);
-    dpp::snowflake issue_id = getIssueChannelForGuild(guild_id);
+    dpp::snowflake help_id = getColumnFromServerConfig(guild_id, "HelpChannelID");
+    dpp::snowflake issue_id = getColumnFromServerConfig(guild_id, "IssueChannelID");
 
-    dpp::snowflake response_channel_id = getIssueResponseChannelForGuild(guild_id);
+    dpp::snowflake response_channel_id = getColumnFromServerConfig(guild_id, "IssueResponseChannelID");
 
 
     if (processed_threads.contains(thread_id)) {
@@ -709,7 +636,7 @@ void ModLogModule::onThreadCreate(const dpp::thread_create_t& event)
     }
     else if (parent_id == help_id)
 {
-    dpp::snowflake faq_id = getFaqChannelForGuild(guild_id);
+    dpp::snowflake faq_id = getColumnFromServerConfig(guild_id, "FaqChannelID");
 
 
     bot.messages_get(faq_id, 0, 0, 0, 1,

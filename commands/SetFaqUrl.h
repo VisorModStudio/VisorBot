@@ -2,7 +2,7 @@
 #include <dpp/dpp.h>
 #include "../Command.h"
 
-class SetIssueChannel : public Command
+class SetFaqUrl : public Command
 {
 private:
 
@@ -10,7 +10,7 @@ private:
 
 public:
 
-    explicit SetIssueChannel(dpp::cluster& bot_ref) : bot(bot_ref) {}
+    explicit SetFaqUrl(dpp::cluster& bot_ref) : bot(bot_ref) {}
 
     std::string getName() const override;
     std::string getDescription() const override;

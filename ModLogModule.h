@@ -31,11 +31,8 @@ class ModLogModule : public EventModule {
     GeminiClient& gemini;
 
 
-    dpp::snowflake getLogChannelForGuild(dpp::snowflake guild_id);
-    dpp::snowflake getIssueChannelForGuild(dpp::snowflake guild_id);
-    dpp::snowflake getIssueResponseChannelForGuild(dpp::snowflake guild_id);
-    dpp::snowflake getHelpChannelForGuild(dpp::snowflake guild_id);
-    dpp::snowflake getFaqChannelForGuild(dpp::snowflake guild_id);
+    dpp::snowflake getColumnFromServerConfig(dpp::snowflake guild_id, std::string column);
+
 
 
     void sendLogWithAudit(const dpp::snowflake guild_id, AuditLogEvent action_type, const dpp::snowflake& object_id,
