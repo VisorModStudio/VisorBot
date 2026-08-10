@@ -22,6 +22,13 @@ jobs:
         with:
           ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
 
+      - name: Setup vcpkg (pinned to builtin-baseline)
+        run: |
+          git clone https://github.com/microsoft/vcpkg.git "${{ github.workspace }}/vcpkg"
+          git -C "${{ github.workspace }}/vcpkg" checkout ea1a7396b05637a53bf23c078647ecc0edee4b80
+          "${{ github.workspace }}/vcpkg/bootstrap-vcpkg.sh" -disableMetrics
+          echo "VCPKG_INSTALLATION_ROOT=${{ github.workspace }}/vcpkg" >> "$GITHUB_ENV"
+
       - name: Restore/Cache vcpkg Dependencies
         uses: actions/cache@v4
         with:
