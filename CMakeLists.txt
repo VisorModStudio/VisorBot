@@ -33,7 +33,7 @@ add_executable(VisorBot main.cpp
         commands/SetKnowledgeSource.h
 )
 
-target_include_directories(VisorBot PRIVATE C:/vcpkg/installed/x64-windows/include)
+#target_include_directories(VisorBot PRIVATE C:/vcpkg/installed/x64-windows/include)
 
 add_compile_definitions(NOMINMAX)
 
