@@ -25,10 +25,8 @@ add_executable(VisorBot main.cpp
         AuditLogEvents.h
         GeminiClient.cpp
         GeminiClient.h
-        commands/SetChannel.cpp
-        commands/SetChannel.h
-        commands/SetFaqUrl.cpp
-        commands/SetFaqUrl.h
+        commands/SetDbValue.cpp
+        commands/SetDbValue.h
 )
 
 target_include_directories(VisorBot PRIVATE C:/vcpkg/installed/x64-windows/include)

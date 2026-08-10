@@ -5,6 +5,7 @@
 
 
 
+
 dpp::snowflake ModLogModule::getColumnFromServerConfig(dpp::snowflake guild_id, std::string column)
 {
     dpp::snowflake channel_id = 0;
@@ -28,6 +29,32 @@ dpp::snowflake ModLogModule::getColumnFromServerConfig(dpp::snowflake guild_id, 
     sqlite3_finalize(stmt);
 
     return channel_id;
+}
+
+std::string ModLogModule::getStringColumnFromServerConfig(dpp::snowflake guild_id, std::string column)
+{
+    std::string result = "";
+
+    std::string sql = "SELECT " + column + " FROM ServerConfig WHERE GuildID = ?;";
+    sqlite3_stmt* stmt = nullptr;
+
+    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) == SQLITE_OK)
+    {
+        sqlite3_bind_int64(stmt, 1, static_cast<int64_t>(guild_id));
+
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+        {
+            const unsigned char* text = sqlite3_column_text(stmt, 0);
+
+            if (text != nullptr) {
+                result = reinterpret_cast<const char*>(text);
+            }
+        }
+    }
+
+    sqlite3_finalize(stmt);
+
+    return result;
 }
 
 
@@ -537,16 +564,16 @@ void ModLogModule::onMessageBulkDelete(const dpp::message_delete_bulk_t& event)
         }
 
         dpp::snowflake author_id = it->second.first;
-        std::string content = it->second.second.empty() ? "*(kein Text)*" : it->second.second;
+        std::string content = it->second.second.empty() ? "*No Text*" : it->second.second;
 
         size_t offset = 0;
         do
         {
-            std::string chunk_text = content.substr(offset, 900);   // etwas mehr Puffer wegen zusätzlichem Label-Text im Value
+            std::string chunk_text = content.substr(offset, 900);
             offset += 900;
 
-            std::string field_name = "Message";                      // neutral, keine Mentions hier -> egal, dass es fett ist
-            std::string field_value = "Sent By: <@" + author_id.str() + ">\nContent: " + chunk_text;   // Mention + Content BEIDE im Value
+            std::string field_name = "Message";
+            std::string field_value = "Sent By: <@" + author_id.str() + ">\nContent: " + chunk_text;
 
             if (field_count >= 25 || char_count + field_value.size() + field_name.size() > 5800)
             {
@@ -568,34 +595,37 @@ void ModLogModule::onMessageBulkDelete(const dpp::message_delete_bulk_t& event)
 
     flush_embed();
 }
-//
+
 
 void ModLogModule::onThreadCreate(const dpp::thread_create_t& event)
 {
-
     dpp::snowflake thread_id = event.created.id;
     dpp::snowflake thread_creator = event.created.owner_id;
     dpp::snowflake parent_id = event.created.parent_id;
     dpp::snowflake guild_id = event.created.guild_id;
+
     dpp::snowflake help_id = getColumnFromServerConfig(guild_id, "HelpChannelID");
     dpp::snowflake issue_id = getColumnFromServerConfig(guild_id, "IssueChannelID");
-
     dpp::snowflake response_channel_id = getColumnFromServerConfig(guild_id, "IssueResponseChannelID");
+
+
+    if (parent_id != issue_id && parent_id != help_id) {
+        return;
+    }
 
 
     if (processed_threads.contains(thread_id)) {
         return;
     }
-
     processed_threads.insert(thread_id);
 
     std::string thread_title = event.created.name;
+
 
     if (parent_id == issue_id)
     {
         bot.message_get(thread_id, thread_id, [this, thread_id, thread_title, thread_creator, response_channel_id](const dpp::confirmation_callback_t& cb) {
             if (cb.is_error()) {
-
                 processed_threads.erase(thread_id);
                 return;
             }
@@ -611,84 +641,73 @@ void ModLogModule::onThreadCreate(const dpp::thread_create_t& event)
                 dpp::message msg(response_channel_id, embed);
 
                 msg.add_component(
-                    dpp::component()
-                        .add_component(
-                            dpp::component()
-                                .set_label("Ask for Information")
-                                .set_type(dpp::cot_button)
-                                .set_emoji("❔")
-                                .set_style(dpp::cos_primary)
-                                .set_id("info_ask_button:" + thread_id.str())
-                        )
-                        .add_component(
-                            dpp::component()
-                                .set_label("Ask for game log")
-                                .set_type(dpp::cot_button)
-                                .set_emoji("❓")
-                                .set_style(dpp::cos_primary)
-                                .set_id("log_ask_button:" + thread_id.str())
-                        )
+                    dpp::component().add_component(
+                        dpp::component()
+                            .set_label("Ask for Information")
+                            .set_type(dpp::cot_button)
+                            .set_emoji("❔")
+                            .set_style(dpp::cos_primary)
+                            .set_id("info_ask_button:" + thread_id.str())
+                    ).add_component(
+                        dpp::component()
+                            .set_label("Ask for game log")
+                            .set_type(dpp::cot_button)
+                            .set_emoji("❓")
+                            .set_style(dpp::cos_primary)
+                            .set_id("log_ask_button:" + thread_id.str())
+                    )
                 );
 
                 bot.message_create(msg);
             });
         });
     }
+
     else if (parent_id == help_id)
-{
-    dpp::snowflake faq_id = getColumnFromServerConfig(guild_id, "FaqChannelID");
+    {
+
+        std::string faq_url = getStringColumnFromServerConfig(guild_id, "FaqUrl");
+
+        if (faq_url.empty()) {
+            processed_threads.erase(thread_id);
+            return;
+        }
 
 
-    bot.messages_get(faq_id, 0, 0, 0, 1,
-        [this, thread_id, thread_title](const dpp::confirmation_callback_t& faq_cb)
-        {
-            std::string faq_content;
-
-            if (!faq_cb.is_error())
-            {
-                dpp::message_map faq_messages = std::get<dpp::message_map>(faq_cb.value);
-                if (!faq_messages.empty())
-                {
-                    faq_content = faq_messages.begin()->second.content;
-                }
+        bot.message_get(thread_id, thread_id, [this, thread_id, thread_title, faq_url](const dpp::confirmation_callback_t& cb) {
+            if (cb.is_error()) {
+                processed_threads.erase(thread_id);
+                return;
             }
 
+            dpp::message msg = std::get<dpp::message>(cb.value);
+
+            std::thread([this, thread_id, thread_title, msg_content = msg.content, faq_url]() {
 
 
-            bot.message_get(thread_id, thread_id,
-                [this, thread_id, thread_title, faq_content](const dpp::confirmation_callback_t& cb)
-                {
-                    if (cb.is_error())
-                    {
-                        processed_threads.erase(thread_id);
-                        return;
-                    }
+                std::string faq_content = gemini.fetch_website_info(faq_url);
 
-                    dpp::message msg = std::get<dpp::message>(cb.value);
-
-                    gemini.answer_faq(
-                        "Question title: " + thread_title + "\nQuestion content: " + msg.content,
-                        faq_content,
-                        [this, thread_id](std::string answer)
-                        {
-                            dpp::embed embed = dpp::embed()
-                                .set_color(dpp::colors::blurple)
-                                .set_title("AI-Answer")
-                                .set_description(answer);
-
-                            bot.message_create(dpp::message(thread_id, embed));
-                        }
-                    );
+                if (faq_content.empty()) {
+                    processed_threads.erase(thread_id);
+                    return;
                 }
-            );
-        }
-    );
-}
-    else
-    {
-        return;
-    }
 
+
+                gemini.answer_faq(
+                    "Question title: " + thread_title + "\nQuestion content: " + msg_content,
+                    faq_content,
+                    [this, thread_id](std::string answer) {
+                        dpp::embed embed = dpp::embed()
+                            .set_color(dpp::colors::blurple)
+                            .set_title("AI-Answer")
+                            .set_description(answer);
+
+                        bot.message_create(dpp::message(thread_id, embed));
+                    }
+                );
+            }).detach();
+        });
+    }
 }
 
 

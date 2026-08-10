@@ -8,7 +8,7 @@ BotClient::BotClient() : dpp::cluster(
 )
 {
 
-    if (sqlite3_open("VisorBot.db", &db) != SQLITE_OK) //TODO
+    if (sqlite3_open("VisorBot.db", &db) != SQLITE_OK)
     {
         std::cerr << "Can't open database: " << sqlite3_errmsg(db) << std::endl;
     }

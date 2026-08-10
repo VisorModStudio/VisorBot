@@ -6,13 +6,9 @@
 #include "Command.h"
 #include "ModLogModule.h"
 #include "commands/PingCommand.h"
-#include "commands/SetModChannel.h"
 #include "commands/SetUserPermission.h"
-#include "commands/SetHelpChannel.h"
-#include "commands/SetIssueChannel.h"
-#include "commands/SetChannel.h"
+#include "commands/SetDbValue.h"
 #include "GeminiClient.h"
-#include "commands/SetIssueResponseChannel.h"
 
 
 int main()
@@ -41,7 +37,7 @@ int main()
     std::string SetUserPerm_name = SetUserPerm->getName();
     commands[SetUserPerm_name] = std::move(SetUserPerm);
 
-    auto set_channel = std::make_unique<SetChannel>(bot);
+    auto set_channel = std::make_unique<SetDbValue>(bot);
     std::string set_channel_name = set_channel->getName();
     commands[set_channel_name] = std::move(set_channel);
 
@@ -54,7 +50,7 @@ int main()
 
         if (it == commands.end())
         {
-            event.reply("Unknown command: " + cmd_name);
+            event.reply(dpp::message("Unknown command: " + cmd_name).set_flags( dpp::m_ephemeral));
             return;
         }
         if (it->second->requiresAdmin())
@@ -92,23 +88,31 @@ int main()
                 );
             }
 
-            if (cmd->getName() == "setchannel")
+            if (cmd->getName() == "setdbvalue")
             {
-                discord_cmd.add_option(
-                    dpp::command_option(dpp::co_channel, "channel", "Where the channel should be set", true)
-                        .add_channel_type(dpp::CHANNEL_TEXT)
-                        .add_channel_type(dpp::CHANNEL_FORUM)
-                );
 
                 discord_cmd.add_option(
 
-                    dpp::command_option(dpp::co_string, "channeltype", "The Channel type to be changed", true)
+                    dpp::command_option(dpp::co_string, "entrytype", "The entry type to be changed", true)
                         .add_choice(dpp::command_option_choice("ModChannel", "Mod_Channel"))
                         .add_choice(dpp::command_option_choice("HelpChannel", "Help_Channel"))
                         .add_choice(dpp::command_option_choice("IssueChannel", "Issue_Channel"))
                         .add_choice(dpp::command_option_choice("FaqChannel", "Faq_Channel"))
                         .add_choice(dpp::command_option_choice("IssueResponseChannel", "IssueRspns_Channel"))
+                        .add_choice(dpp::command_option_choice("FaqUrl", "Faq_Url"))
                 );
+
+
+                discord_cmd.add_option(
+                    dpp::command_option(dpp::co_channel, "channel_value", "What the entytype should be set to", false)
+                        .add_channel_type(dpp::CHANNEL_TEXT)
+                        .add_channel_type(dpp::CHANNEL_FORUM)
+
+                    ).add_option(
+                        dpp::command_option(dpp::co_string, "text_value", "Or put in a text value(used for setting Url's)", false)
+                    );
+
+
             }
 
             bot.global_command_create(discord_cmd);

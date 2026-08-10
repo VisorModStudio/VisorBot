@@ -32,7 +32,7 @@ class ModLogModule : public EventModule {
 
 
     dpp::snowflake getColumnFromServerConfig(dpp::snowflake guild_id, std::string column);
-
+    std::string getStringColumnFromServerConfig(dpp::snowflake guild_id, std::string column);
 
 
     void sendLogWithAudit(const dpp::snowflake guild_id, AuditLogEvent action_type, const dpp::snowflake& object_id,

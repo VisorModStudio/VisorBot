@@ -88,8 +88,7 @@ std::string GeminiClient::fetch_website_info(const std::string& url)
     if (r.status_code == 200)
     {
         std::cout << "Successfully loaded\n\n";
-        std::string content = r.text;
-        std::cout << r.text << std::endl;
+        content = r.text;
 
     }
     else
