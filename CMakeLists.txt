@@ -6,8 +6,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(dpp CONFIG REQUIRED)
 find_package(cpr CONFIG REQUIRED)
-
-
 find_package(SQLite3 REQUIRED)
 
 add_executable(VisorBot main.cpp

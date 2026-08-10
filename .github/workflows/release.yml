@@ -35,14 +35,24 @@ jobs:
           path: |
             ~/.cache/vcpkg
             ${{ github.workspace }}/build/vcpkg_installed
-          key: ${{ runner.os }}-vcpkg-${{ hashFiles('vcpkg.json') }}
+          key: ${{ runner.os }}-vcpkg-static-${{ hashFiles('vcpkg.json') }}
           restore-keys: |
-            ${{ runner.os }}-vcpkg-
+            ${{ runner.os }}-vcpkg-static-
 
       - name: Build Project via CMake & vcpkg
+        env:
+          VCPKG_DEFAULT_TRIPLET: x64-linux-static
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DVCPKG_TARGET_TRIPLET=x64-linux-static \
+            -DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake
           cmake --build build --config Release
+
+      - name: Verify Binary Linkage
+        run: |
+          echo "=== Verknüpfte Bibliotheken der Executable ==="
+          ldd build/VisorBot
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
