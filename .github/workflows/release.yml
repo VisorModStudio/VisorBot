@@ -32,34 +32,49 @@ jobs:
           "${{ github.workspace }}/vcpkg/bootstrap-vcpkg.sh" -disableMetrics
           echo "VCPKG_INSTALLATION_ROOT=${{ github.workspace }}/vcpkg" >> "$GITHUB_ENV"
 
+      - name: Patch dpp port for static build
+        run: |
+          # Copy the original dpp port to an overlay directory
+          mkdir -p overlay-ports/dpp
+          cp -r "${{ github.workspace }}/vcpkg/ports/dpp/"* overlay-ports/dpp/
+
+          # Patch the portfile to force BUILD_SHARED_LIBS=OFF
+          sed -i 's/vcpkg_cmake_configure(/vcpkg_cmake_configure(\n    OPTIONS\n        -DBUILD_SHARED_LIBS=OFF\n        -DRUN_LDCONFIG=OFF\n        -DDPP_INSTALL=ON\n        -DDPP_BUILD_TEST=OFF/' overlay-ports/dpp/portfile.cmake
+
+          echo "=== Patched portfile.cmake ==="
+          cat overlay-ports/dpp/portfile.cmake
+
       - name: Restore/Cache vcpkg Dependencies
         uses: actions/cache@v4
         with:
           path: |
             ~/.cache/vcpkg
             ${{ github.workspace }}/build/vcpkg_installed
-          key: ${{ runner.os }}-vcpkg-${{ hashFiles('vcpkg.json') }}
+          key: ${{ runner.os }}-vcpkg-static-v2-${{ hashFiles('vcpkg.json') }}
           restore-keys: |
-            ${{ runner.os }}-vcpkg-
+            ${{ runner.os }}-vcpkg-static-v2-
 
       - name: Build Project via CMake & vcpkg
         run: |
           cmake -B build \
             -DCMAKE_BUILD_TYPE=Release \
             -DVCPKG_TARGET_TRIPLET=x64-linux \
+            -DVCPKG_OVERLAY_PORTS=overlay-ports \
             -DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake
           cmake --build build --config Release
 
       - name: Verify Binary Linkage
         run: |
           echo "=== Linked libraries ==="
-          ldd build/VisorBot || true
+          ldd build/VisorBot || echo "(statically linked - no dynamic dependencies)"
           echo ""
           echo "=== Check for dynamic libdpp ==="
           if ldd build/VisorBot 2>/dev/null | grep -q "libdpp"; then
-            echo "WARNING: libdpp appears dynamically linked"
+            echo "ERROR: libdpp is still dynamically linked!"
+            ldd build/VisorBot | grep libdpp
+            exit 1
           else
-            echo "OK: libdpp is not dynamically linked"
+            echo "OK: libdpp is statically linked."
           fi
 
       - name: Create GitHub Release
