@@ -25,11 +25,16 @@ add_executable(VisorBot main.cpp
         AuditLogEvents.h
         GeminiClient.cpp
         GeminiClient.h
-        commands/SetDbValue.cpp
-        commands/SetDbValue.h
+        commands/SetServerConfigValue.cpp
+        commands/SetServerConfigValue.h
+        KnowledgeCache.cpp
+        KnowledgeCache.h
+        commands/SetKnowledgeSource.cpp
+        commands/SetKnowledgeSource.h
 )
 
 target_include_directories(VisorBot PRIVATE C:/vcpkg/installed/x64-windows/include)
 
+add_compile_definitions(NOMINMAX)
 
 target_link_libraries(VisorBot PRIVATE dpp::dpp SQLite::SQLite3 cpr::cpr)

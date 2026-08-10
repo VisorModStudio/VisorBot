@@ -4,13 +4,9 @@
 
 class PingCommand : public Command
 {
-    private:
+public:
 
-    dpp::cluster& bot;
-
-    public:
-    
-    explicit PingCommand(dpp::cluster& bot_ref) : bot(bot_ref) {}
+    explicit PingCommand(dpp::cluster& bot_ref) : Command(bot_ref) {}
 
     std::string getName() const override;
     std::string getDescription() const override;
@@ -19,5 +15,3 @@ class PingCommand : public Command
 
 
 };
-
-

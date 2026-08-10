@@ -4,18 +4,12 @@
 
 class SetUserPermission : public Command
 {
-private:
-
-    dpp::cluster& bot;
-
 public:
 
-    explicit SetUserPermission(dpp::cluster& bot_ref) : bot(bot_ref) {}
+    explicit SetUserPermission(dpp::cluster& bot_ref) : Command(bot_ref) {}
 
     std::string getName() const override;
     std::string getDescription() const override;
     void execute(const dpp::slashcommand_t& event) override;
 
 };
-
-

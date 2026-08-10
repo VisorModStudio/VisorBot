@@ -1,7 +1,7 @@
 #pragma once
 #include <dpp/dpp.h>
 #include <sqlite3.h>
-
+#include "KnowledgeCache.h"
 
 class BotClient : public dpp::cluster
 {
@@ -10,6 +10,7 @@ public:
     ~BotClient();
 
     sqlite3* getDB() const { return db; }
+    KnowledgeCache knowledgeCache;
 
     bool userHasAdminPermission(dpp::snowflake user_id);
     void addColumnIfNotExists(const std::string& table, const std::string& column, const std::string& type);

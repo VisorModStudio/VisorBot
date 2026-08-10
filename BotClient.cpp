@@ -36,7 +36,12 @@ void BotClient::InitDatabase()
                       "ModChannelID TEXT);"
                       "CREATE TABLE IF NOT EXISTS UserHasAdmin("
                       "UserID TEXT PRIMARY KEY,"
-                      "HasPerms INTEGER);";
+                      "HasPerms INTEGER);"
+                      "CREATE TABLE IF NOT EXISTS KnowledgeSources("
+                      "SourceID INTEGER PRIMARY KEY AUTOINCREMENT,"
+                      "GuildID TEXT NOT NULL,"
+                      "SourceName TEXT NOT NULL,"
+                      "Url TEXT NOT NULL);";
 
     char* errMsg = nullptr;
     if (sqlite3_exec(db, sql.c_str(), nullptr, nullptr, &errMsg) != SQLITE_OK) {

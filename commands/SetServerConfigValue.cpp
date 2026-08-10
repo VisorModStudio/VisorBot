@@ -1,20 +1,20 @@
-#include "SetDbValue.h"
+#include "SetServerConfigValue.h"
 #include "../BotClient.h"
 #include <sqlite3.h>
 #include <string>
 #include <dpp/dpp.h>
 
-std::string SetDbValue::getName() const
+std::string SetServerConfigValue::getName() const
 {
     return "setdbvalue";
 }
 
-std::string SetDbValue::getDescription() const
+std::string SetServerConfigValue::getDescription() const
 {
     return "Sets values for specific db entries";
 }
 
-void SetDbValue::execute(const dpp::slashcommand_t& event)
+void SetServerConfigValue::execute(const dpp::slashcommand_t& event)
 {
     std::string GuildID = std::to_string(event.command.guild_id);
 
@@ -43,7 +43,7 @@ void SetDbValue::execute(const dpp::slashcommand_t& event)
     else if (channelType == "Issue_Channel") targetColumn = "IssueChannelID";
     else if (channelType == "Faq_Channel") targetColumn = "FaqChannelID";
     else if (channelType == "IssueRspns_Channel") targetColumn = "IssueResponseChannelID";
-    else if (channelType == "Faq_Url") targetColumn = "FaqUrl";
+
 
     if (targetColumn.empty()) {
         event.reply(dpp::message("Incorrect ChannelType").set_flags(dpp::m_ephemeral));

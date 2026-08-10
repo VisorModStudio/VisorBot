@@ -1,0 +1,37 @@
+name: Build & Release Discord Bot
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Restore/Cache vcpkg Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/vcpkg
+            ${{ github.workspace }}/vcpkg_installed
+          key: ${{ runner.os }}-vcpkg-${{ hashFiles('vcpkg.json') }}
+          restore-keys: |
+            ${{ runner.os }}-vcpkg-
+
+      - name: Build Project via CMake & vcpkg
+        run: |
+          vcpkg integrate install
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake
+          cmake --build build --config Release
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/VisorBot

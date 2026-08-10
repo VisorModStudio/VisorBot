@@ -666,15 +666,15 @@ void ModLogModule::onThreadCreate(const dpp::thread_create_t& event)
     else if (parent_id == help_id)
     {
 
-        std::string faq_url = getStringColumnFromServerConfig(guild_id, "FaqUrl");
+        std::string faq_content = knowledgeCache.getCombinedContext(guild_id);
 
-        if (faq_url.empty()) {
+        if (faq_content.empty()) {
             processed_threads.erase(thread_id);
             return;
         }
 
 
-        bot.message_get(thread_id, thread_id, [this, thread_id, thread_title, faq_url](const dpp::confirmation_callback_t& cb) {
+        bot.message_get(thread_id, thread_id, [this, thread_id, thread_title, faq_content](const dpp::confirmation_callback_t& cb) {
             if (cb.is_error()) {
                 processed_threads.erase(thread_id);
                 return;
@@ -682,30 +682,20 @@ void ModLogModule::onThreadCreate(const dpp::thread_create_t& event)
 
             dpp::message msg = std::get<dpp::message>(cb.value);
 
-            std::thread([this, thread_id, thread_title, msg_content = msg.content, faq_url]() {
 
+            gemini.answer_faq(
+                "Question title: " + thread_title + "\nQuestion content: " + msg.content,
+                faq_content,
+                [this, thread_id, faq_content](std::string answer) {
+                    dpp::embed embed = dpp::embed()
+                        .set_color(dpp::colors::blurple)
+                        .set_title("AI-Answer")
+                        .set_description(answer);
 
-                std::string faq_content = gemini.fetch_website_info(faq_url);
-
-                if (faq_content.empty()) {
-                    processed_threads.erase(thread_id);
-                    return;
+                    bot.message_create(dpp::message(thread_id, embed));
+                    
                 }
-
-
-                gemini.answer_faq(
-                    "Question title: " + thread_title + "\nQuestion content: " + msg_content,
-                    faq_content,
-                    [this, thread_id](std::string answer) {
-                        dpp::embed embed = dpp::embed()
-                            .set_color(dpp::colors::blurple)
-                            .set_title("AI-Answer")
-                            .set_description(answer);
-
-                        bot.message_create(dpp::message(thread_id, embed));
-                    }
-                );
-            }).detach();
+            );
         });
     }
 }

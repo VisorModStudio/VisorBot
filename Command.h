@@ -2,10 +2,11 @@
 #include <dpp/dpp.h>
 #include <string>
 
-
 class Command
 {
-    public:
+public:
+    explicit Command(dpp::cluster& bot_ref) : bot(bot_ref) {}
+
     virtual ~Command() = default ;
 
     virtual std::string getName() const = 0;
@@ -16,5 +17,7 @@ class Command
 
     virtual bool requiresAdmin() const {return true;}
 
+protected:
+    dpp::cluster& bot;
 
 };

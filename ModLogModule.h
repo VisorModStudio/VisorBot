@@ -6,6 +6,7 @@
 #include "sqlite3.h"
 #include "AuditLogEvents.h"
 #include "GeminiClient.h"
+#include "KnowledgeCache.h"
 
 enum class LogType
 {
@@ -29,6 +30,7 @@ class ModLogModule : public EventModule {
     BotClient& bot;
     sqlite3* db;
     GeminiClient& gemini;
+    KnowledgeCache& knowledgeCache;
 
 
     dpp::snowflake getColumnFromServerConfig(dpp::snowflake guild_id, std::string column);
@@ -69,8 +71,10 @@ class ModLogModule : public EventModule {
 
     public:
 
-    ModLogModule(BotClient& bot_ref, sqlite3* db_ref, GeminiClient& gemini_ref)
-        : bot(bot_ref), db(db_ref), gemini(gemini_ref) {}
+    ModLogModule(BotClient& bot_ref, sqlite3* db_ref, GeminiClient& gemini_ref, KnowledgeCache& knowledgeCache_ref)
+        : bot(bot_ref), db(db_ref), gemini(gemini_ref), knowledgeCache(knowledgeCache_ref)
+    {
+    }
 
 
     void registerHandlers() override;
