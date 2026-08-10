@@ -53,6 +53,14 @@ jobs:
         run: |
           echo "=== Verknüpfte Bibliotheken der Executable ==="
           ldd build/VisorBot
+          echo ""
+          echo "=== Prüfe ob libdpp.so NICHT in der Ausgabe steht ==="
+          if ldd build/VisorBot | grep -q "libdpp"; then
+            echo "libdpp ist noch dynamisch gelinkt!"
+            exit 1
+          else
+            echo "libdpp ist statisch eingebunden."
+          fi
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
