@@ -6,7 +6,7 @@
 
 
 
-dpp::snowflake ModLogModule::getColumnFromServerConfig(dpp::snowflake guild_id, std::string column)
+dpp::snowflake ModLogModule::getColumnFromServerConfig(dpp::snowflake guild_id, std::string column) const
 {
     dpp::snowflake channel_id = 0;
 
@@ -31,7 +31,7 @@ dpp::snowflake ModLogModule::getColumnFromServerConfig(dpp::snowflake guild_id, 
     return channel_id;
 }
 
-std::string ModLogModule::getStringColumnFromServerConfig(dpp::snowflake guild_id, std::string column)
+std::string ModLogModule::getStringColumnFromServerConfig(dpp::snowflake guild_id, std::string column) const
 {
     std::string result = "";
 
@@ -172,6 +172,9 @@ void ModLogModule::onButtonClick(const dpp::button_click_t& event)
 
     dpp::message msg(thread_id, embed);
     bot.message_create(msg);
+
+
+    event.reply(dpp::message("Request sent to the thread!").set_flags(dpp::m_ephemeral));
 }
 
 std::string objectTypeToString(ObjectType type)

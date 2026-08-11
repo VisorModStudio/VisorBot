@@ -33,8 +33,9 @@ class ModLogModule : public EventModule {
     KnowledgeCache& knowledgeCache;
 
 
-    dpp::snowflake getColumnFromServerConfig(dpp::snowflake guild_id, std::string column);
-    std::string getStringColumnFromServerConfig(dpp::snowflake guild_id, std::string column);
+
+
+
 
 
     void sendLogWithAudit(const dpp::snowflake guild_id, AuditLogEvent action_type, const dpp::snowflake& object_id,
@@ -70,6 +71,12 @@ class ModLogModule : public EventModule {
     std::unordered_map<dpp::snowflake, std::pair<dpp::snowflake, std::string>> message_cache;
 
     public:
+
+
+    dpp::snowflake getColumnFromServerConfig(dpp::snowflake guild_id, std::string column) const;
+    std::string getStringColumnFromServerConfig(dpp::snowflake guild_id, std::string column) const;
+
+
 
     ModLogModule(BotClient& bot_ref, sqlite3* db_ref, GeminiClient& gemini_ref, KnowledgeCache& knowledgeCache_ref)
         : bot(bot_ref), db(db_ref), gemini(gemini_ref), knowledgeCache(knowledgeCache_ref)

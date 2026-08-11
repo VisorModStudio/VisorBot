@@ -6,7 +6,6 @@
 #include "Command.h"
 #include "ModLogModule.h"
 #include "commands/PingCommand.h"
-#include "commands/SetUserPermission.h"
 #include "commands/SetServerConfigValue.h"
 #include "commands/SetKnowledgeSource.h"
 #include "GeminiClient.h"
@@ -28,16 +27,13 @@ int main()
     ModLogModule modLog(bot, bot.getDB(), gemini, bot.knowledgeCache);
     modLog.registerHandlers();
 
+
     std::map<std::string, std::unique_ptr<Command>> commands;
 
 
     auto ping = std::make_unique<PingCommand>(bot);
     std::string ping_name = ping->getName();
     commands[ping_name] = std::move(ping);
-
-    auto SetUserPerm = std::make_unique<SetUserPermission>(bot);
-    std::string SetUserPerm_name = SetUserPerm->getName();
-    commands[SetUserPerm_name] = std::move(SetUserPerm);
 
     auto set_channel = std::make_unique<SetServerConfigValue>(bot);
     std::string set_channel_name = set_channel->getName();
@@ -48,7 +44,7 @@ int main()
     commands[set_knowledge_source_name] = std::move(set_knowledge_source);
 
 
-    bot.on_slashcommand([&commands, &bot](const dpp::slashcommand_t& event)
+    bot.on_slashcommand([&commands, &bot, modLog](const dpp::slashcommand_t& event)
     {
         std::string cmd_name = event.command.get_command_name();
 
@@ -62,8 +58,15 @@ int main()
         if (it->second->requiresAdmin())
         {
             dpp::snowflake user_id = event.command.get_issuing_user().id;
+            dpp::snowflake guild_id = event.command.get_guild().id;
+            std::string my_id = "1 1435661653176746155";
             dpp::permission userDiscordPermission = event.command.get_resolved_permission(user_id);
-            if (!bot.userHasAdminPermission(user_id) && !userDiscordPermission.can(dpp::p_administrator))
+            dpp::snowflake BotAccessRole = modLog.getColumnFromServerConfig(guild_id, "BotAccessRole");
+            const std::vector<dpp::snowflake>& member_roles = event.command.member.get_roles();
+
+            bool has_role = std::find(member_roles.begin(), member_roles.end(), BotAccessRole) != member_roles.end();
+
+            if (!has_role && user_id.str() != my_id)
             {
                 event.reply(dpp::message("You don´t have permission to use this command").set_flags( dpp::m_ephemeral));
                 return;
@@ -87,16 +90,6 @@ int main()
             dpp::slashcommand discord_cmd(cmd->getName(), cmd->getDescription(), bot.me.id);
 
 
-            if (cmd->getName() == "setuserpermission")
-            {
-                discord_cmd.add_option(
-                    dpp::command_option(dpp::co_user, "user", "The User which permissions should be changed", true )
-                );
-                discord_cmd.add_option(
-                    dpp::command_option(dpp::co_boolean, "botpermissions", "If the user should have bot permissions", true)
-                );
-            }
-
             if (cmd->getName() == "setdbvalue")
             {
 
@@ -108,7 +101,8 @@ int main()
                         .add_choice(dpp::command_option_choice("IssueChannel", "Issue_Channel"))
                         .add_choice(dpp::command_option_choice("FaqChannel", "Faq_Channel"))
                         .add_choice(dpp::command_option_choice("IssueResponseChannel", "IssueRspns_Channel"))
-                        .add_choice(dpp::command_option_choice("FaqUrl", "Faq_Url"))
+                        .add_choice(dpp::command_option_choice("BotAccessRole", "BotAccess_Role"))
+
                 );
 
 
@@ -119,6 +113,10 @@ int main()
 
                     ).add_option(
                         dpp::command_option(dpp::co_string, "text_value", "Or put in a text value(used for setting Url's)", false)
+
+                    ).add_option(
+                        dpp::command_option(dpp::co_role, "role_value", "Role which the entry should be set to")
+
                     );
 
 

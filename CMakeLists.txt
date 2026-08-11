@@ -15,8 +15,6 @@ add_executable(VisorBot main.cpp
         commands/PingCommand.cpp
         commands/BulkMessageDelete.cpp
         commands/BulkMessageDelete.h
-        commands/SetUserPermission.cpp
-        commands/SetUserPermission.h
         EventModule.h
         ModLogModule.cpp
         ModLogModule.h

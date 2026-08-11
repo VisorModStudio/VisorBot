@@ -20,6 +20,7 @@ void SetServerConfigValue::execute(const dpp::slashcommand_t& event)
 
 
     dpp::snowflake channel_snowflake = 0;
+    dpp::snowflake role_snowflake = 0;
     std::string text_value = "";
 
 
@@ -28,21 +29,26 @@ void SetServerConfigValue::execute(const dpp::slashcommand_t& event)
         channel_snowflake = *id;
     }
 
+    auto role_param = event.get_parameter("role_value");
+    if (auto* id = std::get_if<dpp::snowflake>(&role_param)) {
+        role_snowflake = *id;
+    }
 
     auto text_param = event.get_parameter("text_value");
     if (auto* str = std::get_if<std::string>(&text_param)) {
         text_value = *str;
     }
 
-    std::string channelType = std::get<std::string>(event.get_parameter("entrytype"));
+    std::string entry_type = std::get<std::string>(event.get_parameter("entrytype"));
 
 
     std::string targetColumn = "";
-    if (channelType == "Mod_Channel") targetColumn = "ModChannelID";
-    else if (channelType == "Help_Channel") targetColumn = "HelpChannelID";
-    else if (channelType == "Issue_Channel") targetColumn = "IssueChannelID";
-    else if (channelType == "Faq_Channel") targetColumn = "FaqChannelID";
-    else if (channelType == "IssueRspns_Channel") targetColumn = "IssueResponseChannelID";
+    if (entry_type == "Mod_Channel") targetColumn = "ModChannelID";
+    else if (entry_type == "Help_Channel") targetColumn = "HelpChannelID";
+    else if (entry_type == "Issue_Channel") targetColumn = "IssueChannelID";
+    else if (entry_type == "Faq_Channel") targetColumn = "FaqChannelID";
+    else if (entry_type == "IssueRspns_Channel") targetColumn = "IssueResponseChannelID";
+    else if (entry_type == "BotAccess_Role") targetColumn = "BotAccessRole";
 
 
     if (targetColumn.empty()) {
@@ -51,32 +57,32 @@ void SetServerConfigValue::execute(const dpp::slashcommand_t& event)
     }
 
 
+    int values_set = 0;
+    if (channel_snowflake != 0) values_set++;
+    if (role_snowflake != 0) values_set++;
+    if (!text_value.empty()) values_set++;
+
+    if (values_set > 1) {
+        event.reply(dpp::message("Please provide EXACTLY ONE value (channel, role, OR text/URL)!").set_flags(dpp::m_ephemeral));
+        return;
+    }
+    if (values_set == 0) {
+        event.reply(dpp::message("At least one value (channel, role, or text) must be set!").set_flags(dpp::m_ephemeral));
+        return;
+    }
+
     std::string valueToStore = "";
     std::string replyMsg = "";
 
-    if (channel_snowflake != 0 && text_value.empty())
-    {
-
+    if (channel_snowflake != 0) {
         valueToStore = std::to_string(channel_snowflake);
-        replyMsg = channelType + " was successfully set to <#" + valueToStore + ">";
-    }
-    else if (channel_snowflake == 0 && !text_value.empty())
-    {
-
+        replyMsg = entry_type + " was successfully set to <#" + valueToStore + ">";
+    } else if (role_snowflake != 0) {
+        valueToStore = std::to_string(role_snowflake);
+        replyMsg = entry_type + " was successfully set to <@&" + valueToStore + ">";
+    } else {
         valueToStore = text_value;
-        replyMsg = channelType + " was successfully set to `" + text_value + "`";
-    }
-    else if (channel_snowflake != 0 && !text_value.empty())
-    {
-
-        event.reply(dpp::message("Please provide EITHER a channel OR text/URL, not both!").set_flags(dpp::m_ephemeral));
-        return;
-    }
-    else
-    {
-
-        event.reply(dpp::message("At least one value (channel or text) must be set!").set_flags(dpp::m_ephemeral));
-        return;
+        replyMsg = entry_type + " was successfully set to `" + text_value + "`";
     }
 
 
@@ -106,3 +112,6 @@ void SetServerConfigValue::execute(const dpp::slashcommand_t& event)
 
     sqlite3_finalize(stmt);
 }
+
+
+

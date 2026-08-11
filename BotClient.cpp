@@ -34,9 +34,6 @@ void BotClient::InitDatabase()
     std::string sql = "CREATE TABLE IF NOT EXISTS ServerConfig ("
                       "GuildID TEXT PRIMARY KEY, "
                       "ModChannelID TEXT);"
-                      "CREATE TABLE IF NOT EXISTS UserHasAdmin("
-                      "UserID TEXT PRIMARY KEY,"
-                      "HasPerms INTEGER);"
                       "CREATE TABLE IF NOT EXISTS KnowledgeSources("
                       "SourceID INTEGER PRIMARY KEY AUTOINCREMENT,"
                       "GuildID TEXT NOT NULL,"
@@ -76,23 +73,12 @@ bool BotClient::userHasAdminPermission(dpp::snowflake user_id)
 {
     std::string user_str = std::to_string(user_id);
     std::string query = "SELECT HasPerms FROM UserHasAdmin WHERE UserID = ?";
-    sqlite3_stmt* stmt;
+
     bool has_perms = false;
 
-    if (sqlite3_prepare_v2(db, query.c_str(), -1, &stmt, nullptr) == SQLITE_OK)
-    {
-        sqlite3_bind_text(stmt, 1, user_str.c_str(), -1, SQLITE_STATIC);
 
-        if (sqlite3_step(stmt) == SQLITE_ROW)
-        {
-            has_perms = sqlite3_column_int(stmt, 0) != 0;
-        }
 
-        sqlite3_finalize(stmt);
-    }
-    else
-    {
-        std::cerr << "SQL error: " << sqlite3_errmsg(db)<< std::endl;
-    }
+
+
     return has_perms;
 }
