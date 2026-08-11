@@ -74,6 +74,7 @@ int main()
     });
 
 
+
     bot.on_ready([&bot, &commands](const dpp::ready_t& event)
     {
 
@@ -120,6 +121,7 @@ int main()
                         dpp::command_option(dpp::co_string, "text_value", "Or put in a text value(used for setting Url's)", false)
                     );
 
+
             }
 
             if (cmd->getName() == "setknowledgesource")
@@ -135,6 +137,7 @@ int main()
             discord_commands.push_back(discord_cmd);
         }
 
+
         bot.global_bulk_command_create(discord_commands);
 
         std::thread([&bot]()
@@ -142,8 +145,21 @@ int main()
             BotClient& client = static_cast<BotClient&>(bot);
             sqlite3* db = client.getDB();
 
-            client.knowledgeCache.reloadAll(db);
-            std::cout << "Knowledge Sources Up-To-Date!";
+            std::cout << "Reloading knowledge sources..." << std::endl;
+
+            try
+            {
+                client.knowledgeCache.reloadAll(db);
+                std::cout << "Knowledge Sources Up-To-Date!" << std::endl;
+            }
+            catch (const std::exception& e)
+            {
+                std::cerr << "Failed to reload knowledge sources: " << e.what() << std::endl;
+            }
+            catch (...)
+            {
+                std::cerr << "Failed to reload knowledge sources: unknown error" << std::endl;
+            }
         }).detach();
     }
 

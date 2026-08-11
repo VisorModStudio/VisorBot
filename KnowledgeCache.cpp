@@ -9,14 +9,25 @@ void KnowledgeCache::reloadGuild(dpp::snowflake guild_id, sqlite3* db) {
 
     std::string combined_text = "";
     for (const auto& source : sources) {
+        std::cout << "  Fetching knowledge source '" << source.name << "' (" << source.url << ")..." << std::endl;
+
         cpr::Response r = cpr::Get(
             cpr::Url{source.url},
-            cpr::Header{{"User-Agent", "VisorBot/1.0"}}
+            cpr::Header{{"User-Agent", "VisorBot/1.0"}},
+            cpr::ConnectTimeout{5000},
+            cpr::Timeout{15000}
         );
+
+        if (r.error.code != cpr::ErrorCode::OK) {
+            std::cerr << "  Failed to fetch '" << source.name << "': " << r.error.message << std::endl;
+            continue;
+        }
 
         if (r.status_code == 200) {
             combined_text += "\n=== SOURCE: " + source.name + " ===\n";
             combined_text += r.text + "\n";
+        } else {
+            std::cerr << "  Source '" << source.name << "' returned HTTP " << r.status_code << std::endl;
         }
     }
 
@@ -35,6 +46,7 @@ void KnowledgeCache::reloadAll(sqlite3* db) {
             if (guild_text) {
                 try {
                     dpp::snowflake guild_id = std::stoull(reinterpret_cast<const char*>(guild_text));
+                    std::cout << "Reloading knowledge sources for guild " << guild_id << "..." << std::endl;
                     reloadGuild(guild_id, db);
                 } catch (...) {}
             }
