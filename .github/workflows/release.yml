@@ -1,4 +1,4 @@
-name: Build & Release VisorBot
+name: Build & Push Docker Image
 
 on:
   push:
@@ -7,14 +7,19 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Tag to release (e.g. v1.0.0)'
+        description: 'Tag to build/push (e.g. v1.0.0)'
         required: true
 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
 jobs:
-  release:
+  docker:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
+      packages: write
 
     steps:
       - name: Checkout Code
@@ -22,146 +27,34 @@ jobs:
         with:
           ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
 
-      - name: Install Build Dependencies
-        run: sudo apt-get update && sudo apt-get install -y build-essential patchelf
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - name: Setup vcpkg (pinned to builtin-baseline)
-        run: |
-          git clone https://github.com/microsoft/vcpkg.git "${{ github.workspace }}/vcpkg"
-          git -C "${{ github.workspace }}/vcpkg" checkout ea1a7396b05637a53bf23c078647ecc0edee4b80
-          "${{ github.workspace }}/vcpkg/bootstrap-vcpkg.sh" -disableMetrics
-          echo "VCPKG_INSTALLATION_ROOT=${{ github.workspace }}/vcpkg" >> "$GITHUB_ENV"
-
-      - name: Create overlay port for static dpp
-        run: |
-          mkdir -p overlay-ports/dpp
-
-          # Copy vcpkg.json from original port
-          cp "${{ github.workspace }}/vcpkg/ports/dpp/vcpkg.json" overlay-ports/dpp/vcpkg.json
-
-          # Write a completely new portfile that forces static build
-          cat > overlay-ports/dpp/portfile.cmake << 'PORTFILE'
-          vcpkg_from_github(
-              OUT_SOURCE_PATH SOURCE_PATH
-              REPO brainboxdotcc/DPP
-              REF "v${VERSION}"
-              SHA512 e9c34449c4746c015cbec667d99905c4064f43c379a2280e0d5eddad4b446ee26c6c67acb162d9dcbf73cf2400b0e9b75a45bf1716982ef96e88d34d9e1f8b74
-          )
-
-          vcpkg_cmake_configure(
-              SOURCE_PATH "${SOURCE_PATH}"
-              DISABLE_PARALLEL_CONFIGURE
-              OPTIONS
-                  -DBUILD_SHARED_LIBS=OFF
-                  -DRUN_LDCONFIG=OFF
-                  -DDPP_INSTALL=ON
-                  -DDPP_BUILD_TEST=OFF
-                  -DBUILD_VOICE_SUPPORT=ON
-          )
-
-          vcpkg_cmake_install()
-
-          vcpkg_cmake_config_fixup(NO_PREFIX_CORRECTION)
-
-          file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/share/dpp")
-          file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include")
-
-          # Remove any .so files that might have been created
-          file(GLOB DPP_SHARED_LIBS
-              "${CURRENT_PACKAGES_DIR}/lib/*.so"
-              "${CURRENT_PACKAGES_DIR}/lib/*.so.*"
-              "${CURRENT_PACKAGES_DIR}/debug/lib/*.so"
-              "${CURRENT_PACKAGES_DIR}/debug/lib/*.so.*"
-          )
-          if(DPP_SHARED_LIBS)
-              file(REMOVE ${DPP_SHARED_LIBS})
-          endif()
-
-          # Remove bin directories (only needed for shared libs)
-          file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/bin")
-          file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/bin")
-
-          vcpkg_install_copyright(FILE_LIST "${SOURCE_PATH}/LICENSE")
-          PORTFILE
-
-          echo "=== overlay-ports/dpp/portfile.cmake ==="
-          cat overlay-ports/dpp/portfile.cmake
-          echo ""
-          echo "=== overlay-ports/dpp/vcpkg.json ==="
-          cat overlay-ports/dpp/vcpkg.json
-
-      - name: Restore/Cache vcpkg Dependencies
-        uses: actions/cache@v4
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
         with:
-          path: |
-            ~/.cache/vcpkg
-            ${{ github.workspace }}/build/vcpkg_installed
-          key: ${{ runner.os }}-vcpkg-static-v3-${{ hashFiles('vcpkg.json', 'overlay-ports/dpp/portfile.cmake') }}
-          restore-keys: |
-            ${{ runner.os }}-vcpkg-static-v3-
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build Project via CMake & vcpkg
-        run: |
-          cmake -B build \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DVCPKG_TARGET_TRIPLET=x64-linux \
-            -DVCPKG_OVERLAY_PORTS=overlay-ports \
-            -DCMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake
-          cmake --build build --config Release
+      - name: Lowercase image name (GHCR requires it)
+        run: echo "IMAGE_NAME=${IMAGE_NAME,,}" >> "$GITHUB_ENV"
 
-      - name: Debug library files
-        run: |
-          echo "=== .so files in vcpkg_installed ==="
-          find build/vcpkg_installed -name "*.so*" 2>/dev/null || echo "No .so files found"
-          echo ""
-          echo "=== .a files in vcpkg_installed ==="
-          find build/vcpkg_installed -name "*.a" 2>/dev/null || echo "No .a files found"
-          echo ""
-          echo "=== file type of VisorBot ==="
-          file build/VisorBot
-          echo ""
-          echo "=== ldd output ==="
-          ldd build/VisorBot || echo "Not a dynamic executable (fully static)"
-
-      - name: Ensure static binary
-        run: |
-          if ldd build/VisorBot 2>/dev/null | grep -q "libdpp"; then
-            echo "libdpp is still dynamic. Bundling .so files and patching RPATH..."
-
-            # Create release directory
-            mkdir -p release-bundle
-
-            # Copy binary
-            cp build/VisorBot release-bundle/
-
-            # Copy all required .so files from vcpkg
-            for lib in $(ldd build/VisorBot | grep vcpkg_installed | awk '{print $3}'); do
-              cp "$lib" release-bundle/
-              echo "Bundled: $lib"
-            done
-
-            # Patch RPATH so binary looks for .so in its own directory
-            patchelf --set-rpath '$ORIGIN' release-bundle/VisorBot
-
-            echo "=== Verify patched binary ==="
-            ldd release-bundle/VisorBot
-
-            # Create single self-contained archive
-            cd release-bundle
-            tar czf ../VisorBot-bundle.tar.gz *
-            cd ..
-
-            echo "RELEASE_FILE=VisorBot-bundle.tar.gz" >> "$GITHUB_ENV"
-            echo "Created bundle with .so files"
-          else
-            echo "libdpp is statically linked!"
-            echo "RELEASE_FILE=build/VisorBot" >> "$GITHUB_ENV"
-          fi
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+      - name: Determine tags
+        id: meta
+        uses: docker/metadata-action@v5
         with:
-          tag_name: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
-          files: |
-            build/VisorBot
-            VisorBot-bundle.tar.gz
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest
+            type=raw,value=${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+
+      - name: Build & Push Image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
