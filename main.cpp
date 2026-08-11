@@ -74,12 +74,13 @@ int main()
     });
 
 
-
     bot.on_ready([&bot, &commands](const dpp::ready_t& event)
     {
 
     if (dpp::run_once<struct register_bot_commands>())
     {
+        std::vector<dpp::slashcommand> discord_commands;
+
         for (const auto& [name, cmd] : commands)
         {
             dpp::slashcommand discord_cmd(cmd->getName(), cmd->getDescription(), bot.me.id);
@@ -119,7 +120,6 @@ int main()
                         dpp::command_option(dpp::co_string, "text_value", "Or put in a text value(used for setting Url's)", false)
                     );
 
-
             }
 
             if (cmd->getName() == "setknowledgesource")
@@ -132,8 +132,10 @@ int main()
                 );
             }
 
-            bot.global_command_create(discord_cmd);
+            discord_commands.push_back(discord_cmd);
         }
+
+        bot.global_bulk_command_create(discord_commands);
 
         std::thread([&bot]()
         {
