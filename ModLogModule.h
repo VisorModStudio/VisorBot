@@ -46,6 +46,7 @@ class ModLogModule : public EventModule {
 
 
     void onButtonClick(const dpp::button_click_t& event);
+    void onSelectClick(const dpp::select_click_t& event);
 
     void onMemberJoin(const dpp::guild_member_add_t& event);
     void onMemberBan(const dpp::guild_ban_add_t& event);
