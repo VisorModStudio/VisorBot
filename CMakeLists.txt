@@ -27,6 +27,8 @@ add_executable(VisorBot main.cpp
         KnowledgeCache.h
         commands/SetKnowledgeSource.cpp
         commands/SetKnowledgeSource.h
+        UrlSafety.cpp
+        UrlSafety.h
 )
 
 #target_include_directories(VisorBot PRIVATE C:/vcpkg/installed/x64-windows/include)

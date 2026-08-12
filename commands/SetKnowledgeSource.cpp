@@ -4,6 +4,7 @@
 #include <sqlite3.h>
 #include <string>
 #include <dpp/dpp.h>
+#include "../UrlSafety.h"
 
 std::string SetKnowledgeSource::getName() const
 {
@@ -41,6 +42,16 @@ void SetKnowledgeSource::execute(const dpp::slashcommand_t& event)
 
     if (source_url.rfind("http://", 0) != 0 && source_url.rfind("https://", 0) != 0) {
         event.edit_response("The URL must start with http:// or https://");
+        return;
+    }
+    if (source_url.rfind("http://", 0) != 0 && source_url.rfind("https://", 0) != 0) {
+        event.edit_response("The URL must start with http:// or https://");
+        return;
+    }
+
+    auto safety = UrlSafety::validate(source_url);
+    if (!safety.ok) {
+        event.edit_response("URL denied: " + safety.reason);
         return;
     }
 
