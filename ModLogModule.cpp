@@ -779,7 +779,7 @@ void ModLogModule::onThreadCreate(const dpp::thread_create_t& event)
                 [this, thread_id, faq_content](std::string answer) {
                     dpp::embed embed = dpp::embed()
                         .set_color(dpp::colors::blurple)
-                        .set_title("AI-Answer")
+                        .set_title("Visor-Wiki")
                         .set_description(answer);
 
                     bot.message_create(dpp::message(thread_id, embed));
