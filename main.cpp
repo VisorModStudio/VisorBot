@@ -59,14 +59,14 @@ int main()
         {
             dpp::snowflake user_id = event.command.get_issuing_user().id;
             dpp::snowflake guild_id = event.command.get_guild().id;
-            std::string my_id = "1 1435661653176746155";
+            std::string my_id = "1435661653176746155";
             dpp::permission userDiscordPermission = event.command.get_resolved_permission(user_id);
             dpp::snowflake BotAccessRole = modLog.getColumnFromServerConfig(guild_id, "BotAccessRole");
             const std::vector<dpp::snowflake>& member_roles = event.command.member.get_roles();
 
             bool has_role = std::find(member_roles.begin(), member_roles.end(), BotAccessRole) != member_roles.end();
 
-            if (!has_role && user_id.str() != my_id)
+            if (!has_role && user_id.str() != my_id && !bot.userHasAdminPermission(user_id))
             {
                 event.reply(dpp::message("You don´t have permission to use this command").set_flags( dpp::m_ephemeral));
                 return;
