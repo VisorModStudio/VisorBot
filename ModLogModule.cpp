@@ -191,10 +191,10 @@ void ModLogModule::onButtonClick(const dpp::button_click_t& event)
                             .add_select_option(dpp::select_option("Minecraft Launcher", "minecraft_launcher", ""));
 
         row.add_component(launcher_select_menu);
+        msg.add_component(row);
     }
 
     msg.add_embed(embed);
-    msg.add_component(row);
     bot.message_create(msg);
 
     event.reply(dpp::message("Request sent to the thread!").set_flags(dpp::m_ephemeral));
