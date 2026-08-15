@@ -1,10 +1,10 @@
 #include "SetKnowledgeSource.h"
-#include "../BotClient.h"
-#include "../KnowledgeCache.h"
+#include "../src/BotClient.h"
+#include "../services/KnowledgeCache.h"
 #include <sqlite3.h>
 #include <string>
 #include <dpp/dpp.h>
-#include "../UrlSafety.h"
+#include "../services/UrlSafety.h"
 
 std::string SetKnowledgeSource::getName() const
 {

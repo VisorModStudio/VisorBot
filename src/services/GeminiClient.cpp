@@ -24,6 +24,14 @@ void GeminiClient::generate_text(const std::string& prompt, std::function<void(s
                 {"role", "user"},
                 {"content", prompt}
             }
+        })},
+        {"top_p", 1},
+        {"stream", false},
+        {"reasoning_effort", "medium"},
+        {"tools", json::array({
+            {
+                {"type", "browser_search"}
+            }
         })}
     };
 
@@ -69,6 +77,7 @@ void GeminiClient::answer_faq(const std::string& user_question, const std::strin
             3. If no relevant information exists in the FAQ data, respond with exactly: "This information is not available in the FAQ. A staff member will review your question."
             4. Never add commentary, opinions, greetings, or explanations of your own.
             5. Respond in a neutral, factual tone. Do not use emotional language, exclamation marks, or conversational filler.
+            6. If a minecraft log(as a discord download link) or website which links to a minecraft log is postet, look at the log, find the cause and look if there's anything which might fix it in the FAQ.
 
             --- FAQ DATA START ---
             )") + faq_data + "\n--- FAQ DATA END ---\n\n--- USER QUESTION START ---\n" + user_question + "\n--- USER QUESTION END ---";

@@ -1,5 +1,5 @@
 #include "SetServerConfigValue.h"
-#include "../BotClient.h"
+#include "../src/BotClient.h"
 #include <sqlite3.h>
 #include <string>
 #include <dpp/dpp.h>

@@ -1,6 +1,6 @@
 #pragma once
-#include "BotClient.h"
-#include "EventModule.h"
+#include "../src/BotClient.h"
+#include "../src/EventModule.h"
 #include <dpp/dpp.h>
 #include <string>
 #include "sqlite3.h"

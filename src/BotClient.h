@@ -1,7 +1,7 @@
 #pragma once
 #include <dpp/dpp.h>
 #include <sqlite3.h>
-#include "KnowledgeCache.h"
+#include "../services/KnowledgeCache.h"
 
 class BotClient : public dpp::cluster
 {

@@ -1,10 +1,10 @@
 #pragma once
 
-#include "../Command.h"
-#include "../KnowledgeCache.h"
+#include "../src/Command.h"
+#include "../services/KnowledgeCache.h"
 #include <dpp/dpp.h>
 #include <string>
-#include "../BotClient.h"
+#include "../src/BotClient.h"
 
 class SetKnowledgeSource : public Command {
 private:

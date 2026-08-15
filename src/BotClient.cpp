@@ -1,4 +1,4 @@
-#include "BotClient.h"
+#include "../BotClient.h"
 #include <iostream>
 #include <cstdlib>
 

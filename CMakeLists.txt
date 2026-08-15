@@ -8,30 +8,36 @@ find_package(dpp CONFIG REQUIRED)
 find_package(cpr CONFIG REQUIRED)
 find_package(SQLite3 REQUIRED)
 
-add_executable(VisorBot main.cpp
-        Command.h
-        BotClient.h
-        BotClient.cpp
-        commands/PingCommand.cpp
-        commands/BulkMessageDelete.cpp
-        commands/BulkMessageDelete.h
-        EventModule.h
-        ModLogModule.cpp
-        ModLogModule.h
-        AuditLogEvents.h
-        GeminiClient.cpp
-        GeminiClient.h
-        commands/SetServerConfigValue.cpp
-        commands/SetServerConfigValue.h
-        KnowledgeCache.cpp
-        KnowledgeCache.h
-        commands/SetKnowledgeSource.cpp
-        commands/SetKnowledgeSource.h
-        UrlSafety.cpp
-        UrlSafety.h
+add_executable(VisorBot src/main.cpp
+        src/Command.h
+        src/BotClient.h
+        src/BotClient.cpp
+        src/commands/PingCommand.cpp
+        src/commands/BulkMessageDelete.cpp
+        src/commands/BulkMessageDelete.h
+        src/EventModule.h
+        src/services/ModLogModule.cpp
+        src/services/ModLogModule.h
+        src/AuditLogEvents.h
+        src/services/GeminiClient.cpp
+        src/services/GeminiClient.h
+        src/commands/SetServerConfigValue.cpp
+        src/commands/SetServerConfigValue.h
+        src/services/KnowledgeCache.cpp
+        src/services/KnowledgeCache.h
+        src/commands/SetKnowledgeSource.cpp
+        src/commands/SetKnowledgeSource.h
+        src/services/UrlSafety.cpp
+        src/services/UrlSafety.h
+        src/services/Logfetcher.cpp
+        src/services/Logfetcher.h
 )
 
-#target_include_directories(VisorBot PRIVATE C:/vcpkg/installed/x64-windows/include)
+target_include_directories(VisorBot PRIVATE
+        src
+        src/commands
+        src/services
+)
 
 add_compile_definitions(NOMINMAX)
 

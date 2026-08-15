@@ -2,14 +2,14 @@
 #include <iostream>
 #include <memory>
 #include <map>
-#include "BotClient.h"
-#include "Command.h"
-#include "ModLogModule.h"
-#include "commands/PingCommand.h"
-#include "commands/SetServerConfigValue.h"
-#include "commands/SetKnowledgeSource.h"
-#include "GeminiClient.h"
-#include "KnowledgeCache.h"
+#include "../BotClient.h"
+#include "../Command.h"
+#include "../services/ModLogModule.h"
+#include "../commands/PingCommand.h"
+#include "../commands/SetServerConfigValue.h"
+#include "../commands/SetKnowledgeSource.h"
+#include "../services/GeminiClient.h"
+#include "../services/KnowledgeCache.h"
 
 
 int main()
