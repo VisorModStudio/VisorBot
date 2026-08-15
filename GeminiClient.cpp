@@ -15,10 +15,10 @@ GeminiClient::GeminiClient(dpp::cluster& bot, std::string api_key)
 void GeminiClient::generate_text(const std::string& prompt, std::function<void(std::string)> callback) {
 
     std::string url = "https://api.groq.com/openai/v1/chat/completions";
-
+    std::string model = std::getenv("AI-MODEL");
 
     json body = {
-        {"model", "llama-3.3-70b-versatile"},
+        {"model", model},
         {"messages", json::array({
             {
                 {"role", "user"},
