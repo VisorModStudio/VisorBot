@@ -72,12 +72,12 @@ void GeminiClient::answer_faq(const std::string& user_question, const std::strin
     std::string prompt = std::string(R"(You are a support assistant that answers user questions using ONLY the FAQ data provided below.
 
             Rules:
-            1. Search the FAQ data for information relevant to the user's question.
-            2. If relevant information exists, quote it verbatim (word-for-word) from the source. Do not paraphrase, summarize, or add any words of your own.
-            3. If no relevant information exists in the FAQ data, respond with exactly: "This information is not available in the FAQ. A staff member will review your question."
-            4. Never add commentary, opinions, greetings, or explanations of your own.
-            5. Respond in a neutral, factual tone. Do not use emotional language, exclamation marks, or conversational filler.
-            6. If a minecraft log(as a discord download link) or website which links to a minecraft log is postet, look at the log, find the cause and look if there's anything which might fix it in the FAQ.
+            1. Search FAQ for relevant info.
+            2. If found: quote verbatim, no paraphrasing/summarizing/added words.
+            3. If not found OR unsure whether an answer exists: respond exactly "This information is not available in the FAQ. A staff member will review your question."
+            4. No commentary, opinions, greetings, or explanations.
+            5. Tone: neutral, factual; no emotional language, exclamation marks, or filler.
+            6. If a Minecraft log is posted (Discord link or site linking to one): review log, identify cause, check FAQ for a possible fix.
 
             --- FAQ DATA START ---
             )") + faq_data + "\n--- FAQ DATA END ---\n\n--- USER QUESTION START ---\n" + user_question + "\n--- USER QUESTION END ---";

@@ -775,17 +775,27 @@ void ModLogModule::onThreadCreate(const dpp::thread_create_t& event)
             std::vector<dpp::attachment> attachments = msg.attachments;
 
 
+            auto hasExtension = [](const std::string& name, const std::string& ext) {
+                if (name.size() < ext.size()) return false;
+                return std::equal(ext.rbegin(), ext.rend(), name.rbegin(),
+                    [](unsigned char a, unsigned char b) {
+                        return std::tolower(a) == std::tolower(b);
+                    });
+            };
+
+            auto sendFaqAnswer = [this, thread_id](std::string answer) {
+                dpp::embed embed = dpp::embed()
+                    .set_color(dpp::colors::blurple)
+                    .set_title("Visor-Wiki")
+                    .set_description(answer);
+                bot.message_create(dpp::message(thread_id, embed));
+            };
+
             if (attachments.empty()) {
                 gemini.answer_faq(
                     "Question title: " + thread_title + "\nQuestion content: " + msg.content,
                     faq_content,
-                    [this, thread_id](std::string answer) {
-                        dpp::embed embed = dpp::embed()
-                            .set_color(dpp::colors::blurple)
-                            .set_title("Visor-Wiki")
-                            .set_description(answer);
-                        bot.message_create(dpp::message(thread_id, embed));
-                    }
+                    sendFaqAnswer
                 );
                 return;
             }
@@ -794,42 +804,60 @@ void ModLogModule::onThreadCreate(const dpp::thread_create_t& event)
             auto logContents = std::make_shared<std::vector<std::string>>(attachments.size());
             auto remaining = std::make_shared<std::atomic<int>>(static_cast<int>(attachments.size()));
 
+            auto finalizeIfDone = [this, thread_id, thread_title, msg, faq_content, logContents, remaining, sendFaqAnswer]() {
+                if (--(*remaining) != 0) return;
+
+                std::string combinedLogs;
+                for (const auto& content : *logContents) {
+                    if (!content.empty()) {
+                        combinedLogs += content + "\n";
+                    }
+                }
+
+
+                if (msg.content.empty() && combinedLogs.empty()) {
+                    bot.log(dpp::ll_debug, "Thread " + thread_id.str() + ": no text/log content found, skipping Gemini request.");
+                    sendFaqAnswer("I couldn't find a text question or log file. Please describe your issue in text as well.");
+                    return;
+                }
+
+                std::string question = "Question title: " + thread_title +
+                                        "\nQuestion content: " + msg.content;
+
+                if (!combinedLogs.empty()) {
+                    question += "\nAttached log content:\n" + combinedLogs;
+                }
+
+                bot.log(dpp::ll_debug, "Thread " + thread_id.str() + ": sending FAQ request to Gemini.");
+
+                gemini.answer_faq(
+                    question,
+                    faq_content,
+                    [this, thread_id, sendFaqAnswer](std::string answer) {
+                        bot.log(dpp::ll_debug, "Thread " + thread_id.str() + ": received answer from Gemini.");
+                        sendFaqAnswer(answer);
+                    }
+                );
+            };
+
             for (size_t i = 0; i < attachments.size(); i++) {
+                const std::string& filename = attachments[i].filename;
+
+                bool isLogOrTxt = hasExtension(filename, ".log") ||
+                                   hasExtension(filename, ".txt");
+
+                if (!isLogOrTxt) {
+                    finalizeIfDone();
+                    continue;
+                }
+
                 const std::string url = attachments[i].url;
 
-                fetchAndCleanLog(bot, url, [this, thread_id, thread_title, msg, faq_content, logContents, remaining, i](LogFetchResult result) {
+                fetchAndCleanLog(bot, url, [this, finalizeIfDone, logContents, i](LogFetchResult result) {
                     if (result.success && !result.content.empty()) {
                         (*logContents)[i] = result.content;
                     }
-
-
-                    if (--(*remaining) == 0) {
-                        std::string combinedLogs;
-                        for (const auto& content : *logContents) {
-                            if (!content.empty()) {
-                                combinedLogs += content + "\n";
-                            }
-                        }
-
-                        std::string question = "Question title: " + thread_title +
-                                                "\nQuestion content: " + msg.content;
-
-                        if (!combinedLogs.empty()) {
-                            question += "\nAttached log content:\n" + combinedLogs;
-                        }
-
-                        gemini.answer_faq(
-                            question,
-                            faq_content,
-                            [this, thread_id](std::string answer) {
-                                dpp::embed embed = dpp::embed()
-                                    .set_color(dpp::colors::blurple)
-                                    .set_title("Visor-Wiki")
-                                    .set_description(answer);
-                                bot.message_create(dpp::message(thread_id, embed));
-                            }
-                        );
-                    }
+                    finalizeIfDone();
                 });
             }
         });
