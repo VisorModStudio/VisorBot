@@ -608,8 +608,17 @@ void ModLogModule::onMessageDelete(const dpp::message_delete_t& event)
         author_id = it->second.first;
         msg_content = it->second.second;
 
-        sendLog(guild_id, LogType::Warning, "Message Deleted: ",
-                "Content: " + msg_content + "\nSent By: <@" + author_id.str() + ">\nChannel: <#" + channel_id.str() + ">" );
+        if (msg_content.empty())
+        {
+            sendLog(guild_id, LogType::Warning, "Message Deleted: ",
+                "Content: Invalid Format! \nSent By: <@" + author_id.str() + ">\nChannel: <#" + channel_id.str() + ">" );
+        }
+        else
+        {
+            sendLog(guild_id, LogType::Warning, "Message Deleted: ",
+                "Content: ```" + msg_content + "```\nSent By: <@" + author_id.str() + ">\nChannel: <#" + channel_id.str() + ">" );
+        }
+
 
     }
     else
