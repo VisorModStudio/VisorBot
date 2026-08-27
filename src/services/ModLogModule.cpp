@@ -312,14 +312,14 @@ void ModLogModule::sendLogWithAudit(const dpp::snowflake guild_id, AuditLogEvent
             }
 
             dpp::auditlog audit = std::get<dpp::auditlog>(callback.value);
-            std::string action_by = "No staff";
+            std::string action_by = "N/A";
             std::string object_id_str = object_id.str();
 
             for (const auto& entry : audit.entries)
             {
                 if (entry.target_id == object_id)
                 {
-                    action_by = (entry.user_id == 0) ? "No staff" : entry.user_id.str();
+                    action_by = (entry.user_id == 0) ? "N/A" : entry.user_id.str();
                     break;
                 }
             }
@@ -343,6 +343,12 @@ void ModLogModule::sendLogWithAudit(const dpp::snowflake guild_id, AuditLogEvent
 
             std::string type_str = objectTypeToString(eventObject);
             std::string description = type_str + ": " + object_id_str + "\n By: <@" + action_by + ">";
+
+            if (action_by == "N/A")
+            {
+                description = type_str + ": " + object_id_str + "\n By: " + action_by;
+            }
+
             sendLog(guild_id, logType, title, description);
         }
     );
@@ -362,6 +368,7 @@ void ModLogModule::onChannelUpdate(const dpp::channel_update_t& event)
     dpp::snowflake guild_id = event.updating_guild.id;
     std::string channel_name = event.updated.name;
     dpp::snowflake channel_id = event.updated.id;
+
 
     sendLogWithAudit(guild_id, AuditLogEvent::ChannelUpdate, channel_id, "Channel Updated: ", ObjectType::Channel, LogType::Success);
 }

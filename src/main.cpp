@@ -90,13 +90,13 @@ int main()
             dpp::slashcommand discord_cmd(cmd->getName(), cmd->getDescription(), bot.me.id);
 
 
-            if (cmd->getName() == "setdbvalue")
+            if (cmd->getName() == "setvalue")
             {
 
                 discord_cmd.add_option(
 
                     dpp::command_option(dpp::co_string, "entrytype", "The entry type to be changed", true)
-                        .add_choice(dpp::command_option_choice("ModChannel", "Mod_Channel"))
+                        .add_choice(dpp::command_option_choice("LogChannel", "Log_Channel"))
                         .add_choice(dpp::command_option_choice("HelpChannel", "Help_Channel"))
                         .add_choice(dpp::command_option_choice("IssueChannel", "Issue_Channel"))
                         .add_choice(dpp::command_option_choice("FaqChannel", "Faq_Channel"))

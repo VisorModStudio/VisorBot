@@ -6,7 +6,7 @@
 
 std::string SetServerConfigValue::getName() const
 {
-    return "setdbvalue";
+    return "setvalue";
 }
 
 std::string SetServerConfigValue::getDescription() const
@@ -43,7 +43,7 @@ void SetServerConfigValue::execute(const dpp::slashcommand_t& event)
 
 
     std::string targetColumn = "";
-    if (entry_type == "Mod_Channel") targetColumn = "ModChannelID";
+    if (entry_type == "Log_Channel") targetColumn = "ModChannelID";
     else if (entry_type == "Help_Channel") targetColumn = "HelpChannelID";
     else if (entry_type == "Issue_Channel") targetColumn = "IssueChannelID";
     else if (entry_type == "Faq_Channel") targetColumn = "FaqChannelID";
