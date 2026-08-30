@@ -18,7 +18,8 @@ bool ScamMessageScan::ScanMessage(dpp::cluster& bot, dpp::snowflake msgID, dpp::
     for (const auto& attachment : attachments)
     {
 
-        if (!attachment.filename.ends_with(".png") || !attachment.filename.ends_with(".jpeg" || !attachment.filename.ends_with(".gif")))
+
+        if (!attachment.filename.ends_with(".png") && !attachment.filename.ends_with(".jpeg" && !attachment.filename.ends_with(".gif")))
         {
             isScam = false;
             skipCheck = true;
