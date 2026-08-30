@@ -31,6 +31,8 @@ add_executable(VisorBot src/main.cpp
         src/services/UrlSafety.h
         src/services/Logfetcher.cpp
         src/services/Logfetcher.h
+        src/services/ScamMessageScan.cpp
+        src/services/ScamMessageScan.h
 )
 
 target_include_directories(VisorBot PRIVATE

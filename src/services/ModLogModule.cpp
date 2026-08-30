@@ -3,6 +3,7 @@
 #include <thread>
 #include "GeminiClient.h"
 #include "Logfetcher.h"
+#include "ScamMessageScan.h"
 
 
 
@@ -151,7 +152,9 @@ void ModLogModule::registerHandlers() {
 void ModLogModule::onButtonClick(const dpp::button_click_t& event)
 {
     std::string custom_id = event.custom_id;
-    //TODO maybe add AI + message context
+    dpp::snowflake guild_id = event.command.guild_id;
+
+    uint32_t ban_message_delete_time = 63600; // 1 hour
 
 
     size_t sep = custom_id.find(':');
@@ -159,6 +162,7 @@ void ModLogModule::onButtonClick(const dpp::button_click_t& event)
 
     std::string action = custom_id.substr(0, sep);
     dpp::snowflake thread_id = std::stoull(custom_id.substr(sep + 1));
+    dpp::snowflake userID = thread_id; //custom id is used for threads aswell as user ids, depending on the button
 
     dpp::embed embed = dpp::embed();
     dpp::message msg;
@@ -194,11 +198,20 @@ void ModLogModule::onButtonClick(const dpp::button_click_t& event)
         row.add_component(launcher_select_menu);
         msg.add_component(row);
     }
+    else if (action == "softban_button")
+    {
+        bot.guild_ban_add(guild_id, userID, ban_message_delete_time);
+
+        bot.start_timer([this, guild_id, userID](dpp::timer handle) {
+        bot.guild_ban_delete(guild_id, userID);
+        bot.stop_timer(handle);
+    }, 10);
+    }
 
     msg.add_embed(embed);
     bot.message_create(msg);
 
-    event.reply(dpp::message("Request sent to the thread!").set_flags(dpp::m_ephemeral));
+    event.reply(dpp::message("Action Done!").set_flags(dpp::m_ephemeral));
 }
 
 void ModLogModule::onSelectClick(const dpp::select_click_t& event)
@@ -587,8 +600,54 @@ void ModLogModule::onMessageCreate(const dpp::message_create_t& event)
     dpp::snowflake msg_id = event.msg.id;
     std::string msg_content = event.msg.content;
     dpp::snowflake author_id = event.msg.author.id;
+    dpp::snowflake channel_id = event.msg.channel_id;
+    dpp::snowflake guild_id = event.msg.guild_id;
+    time_t timestamp = event.msg.get_creation_time();
+    std::vector<dpp::attachment> attachments = event.msg.attachments;
+    int image_count;
+    dpp::message msg;
+    dpp::embed embed;
+    dpp::snowflake logchannel = getColumnFromServerConfig(guild_id, "ModChannelID");
+
+
+
+    if (!event.msg.attachments.empty())
+    {
+        image_count = event.msg.attachments.size();
+    }
 
     message_cache.insert({msg_id, {author_id, msg_content}});
+
+    bool isScam = scamMessageScan.ScanMessage(bot,msg_id,author_id,channel_id,image_count,timestamp,attachments);
+
+    if (isScam) {
+        std::string link = "https://discord.com/channels/"
+            + std::to_string(event.msg.guild_id)
+            + "/" + std::to_string(event.msg.channel_id)
+            + "/" + std::to_string(event.msg.id);
+
+        embed.set_title("Scam Detected!");
+        embed.set_description("By: <@" + author_id.str() + ">\nMessage: " + link);
+        embed.set_color(dpp::colors::red);
+
+        dpp::component button;
+        button.set_type(dpp::cot_button)
+            .set_label("Soft Ban")
+            .set_emoji("🔨")
+            .set_style(dpp::cos_danger)
+            .set_id("softban_button:" + author_id.str());
+
+        dpp::component row;
+        row.set_type(dpp::cot_action_row).add_component(button);
+
+        msg.channel_id = logchannel;
+        msg.content = "@everyone";
+        msg.add_embed(embed);
+        msg.add_component(row);
+        msg.set_allowed_mentions(true, true, true, false, {}, {});
+        bot.message_create(msg);
+    }
+
 }
 
 void ModLogModule::onMessageDelete(const dpp::message_delete_t& event)
@@ -791,6 +850,7 @@ void ModLogModule::onThreadCreate(const dpp::thread_create_t& event)
             std::vector<dpp::attachment> attachments = msg.attachments;
 
 
+
             auto hasExtension = [](const std::string& name, const std::string& ext) {
                 if (name.size() < ext.size()) return false;
                 return std::equal(ext.rbegin(), ext.rend(), name.rbegin(),
@@ -879,12 +939,3 @@ void ModLogModule::onThreadCreate(const dpp::thread_create_t& event)
         });
     }
 }
-
-
-
-
-
-
-
-
-

@@ -7,6 +7,7 @@
 #include "AuditLogEvents.h"
 #include "GeminiClient.h"
 #include "KnowledgeCache.h"
+#include "ScamMessageScan.h"
 
 enum class LogType
 {
@@ -31,6 +32,8 @@ class ModLogModule : public EventModule {
     sqlite3* db;
     GeminiClient& gemini;
     KnowledgeCache& knowledgeCache;
+    ScamMessageScan& scamMessageScan;
+
 
 
 
@@ -79,8 +82,8 @@ class ModLogModule : public EventModule {
 
 
 
-    ModLogModule(BotClient& bot_ref, sqlite3* db_ref, GeminiClient& gemini_ref, KnowledgeCache& knowledgeCache_ref)
-        : bot(bot_ref), db(db_ref), gemini(gemini_ref), knowledgeCache(knowledgeCache_ref)
+    ModLogModule(BotClient& bot_ref, sqlite3* db_ref, GeminiClient& gemini_ref, KnowledgeCache& knowledgeCache_ref,ScamMessageScan& scamMessageScan_ref)
+        : bot(bot_ref), db(db_ref), gemini(gemini_ref), knowledgeCache(knowledgeCache_ref), scamMessageScan(scamMessageScan_ref)
     {
     }
 

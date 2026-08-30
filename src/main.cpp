@@ -10,6 +10,7 @@
 #include "../commands/SetKnowledgeSource.h"
 #include "../services/GeminiClient.h"
 #include "../services/KnowledgeCache.h"
+#include "../services/ScamMessageScan.h"
 
 
 int main()
@@ -23,8 +24,9 @@ int main()
     std::string gemini_key = gemini_key_env ? gemini_key_env : "";
 
     GeminiClient gemini(bot, gemini_key);
+    ScamMessageScan scamMessageScan;
 
-    ModLogModule modLog(bot, bot.getDB(), gemini, bot.knowledgeCache);
+    ModLogModule modLog(bot, bot.getDB(), gemini, bot.knowledgeCache, scamMessageScan);
     modLog.registerHandlers();
 
 

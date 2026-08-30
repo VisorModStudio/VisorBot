@@ -6,7 +6,7 @@ std::string BulkMessageDelete::getName() const
 }
 std::string BulkMessageDelete::getDescription() const
 {
-    return "Deletes messages in bulk that were posted in a certain time range";
+    return "Deletes a custom amount of messages all at once";
 
 }
 

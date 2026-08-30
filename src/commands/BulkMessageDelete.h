@@ -5,7 +5,7 @@
 
 class BulkMessageDelete : public Command
 {
-public:
+    public:
 
     explicit BulkMessageDelete(dpp::cluster& bot_ref) : Command(bot_ref) {}
 
@@ -13,4 +13,8 @@ public:
     std::string getDescription() const override;
     void execute(const dpp::slashcommand_t& event) override;
     bool IsAdminCommand = true;
+
+    private:
+    std::unordered_map<dpp::snowflake, std::pair<dpp::snowflake, std::string>> message_cache;
+
 };
