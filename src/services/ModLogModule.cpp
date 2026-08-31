@@ -153,9 +153,14 @@ void ModLogModule::onButtonClick(const dpp::button_click_t& event)
 {
     std::string custom_id = event.custom_id;
     dpp::snowflake guild_id = event.command.guild_id;
+    dpp::guild* g = dpp::find_guild(guild_id);
 
-    uint32_t ban_message_delete_time = 63600; // 1 hour
+    if (!g) {
+        event.reply(dpp::message("Internal error: guild not found.").set_flags(dpp::m_ephemeral));
+        return;
+    }
 
+    uint32_t ban_message_delete_time = 3600; // 1 hour
 
     size_t sep = custom_id.find(':');
     if (sep == std::string::npos) return;
@@ -169,13 +174,11 @@ void ModLogModule::onButtonClick(const dpp::button_click_t& event)
     msg.set_channel_id(thread_id);
     dpp::component row;
 
-
     if (action == "info_ask_button")
     {
         embed.set_color(dpp::colors::blurple)
         .set_title("Information Request")
         .set_description("Please send more information about the problem like mods list and other info that might help to find the cause");
-
     }
     else if (action == "log_ask_button")
     {
@@ -200,12 +203,23 @@ void ModLogModule::onButtonClick(const dpp::button_click_t& event)
     }
     else if (action == "softban_button")
     {
+        dpp::permission perms = g->base_permissions(event.command.member);
+
+        if (!(perms & dpp::p_ban_members))
+        {
+            event.reply(dpp::message("You are not allowed to ban members!").set_flags(dpp::m_ephemeral));
+            return;
+        }
+
         bot.guild_ban_add(guild_id, userID, ban_message_delete_time);
 
         bot.start_timer([this, guild_id, userID](dpp::timer handle) {
-        bot.guild_ban_delete(guild_id, userID);
-        bot.stop_timer(handle);
-    }, 10);
+            bot.guild_ban_delete(guild_id, userID);
+            bot.stop_timer(handle);
+        }, 10);
+
+        event.reply(dpp::message("Softban executed.").set_flags(dpp::m_ephemeral));
+        return;
     }
 
     msg.add_embed(embed);
