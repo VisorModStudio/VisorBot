@@ -201,6 +201,13 @@ void ModLogModule::onButtonClick(const dpp::button_click_t& event)
         row.add_component(launcher_select_menu);
         msg.add_component(row);
     }
+    else if (action == "issue_note_button")
+    {
+        embed.set_color(dpp::colors::green)
+        .set_title("Issue Noted!")
+        .set_description("A dev has noted this issue, it will be fixed as soon as possible");
+
+    }
     else if (action == "softban_button")
     {
         dpp::permission perms = g->base_permissions(event.command.member);
@@ -622,18 +629,18 @@ void ModLogModule::onMessageCreate(const dpp::message_create_t& event)
     dpp::message msg;
     dpp::embed embed;
     dpp::snowflake logchannel = getColumnFromServerConfig(guild_id, "ModChannelID");
+    bool isScam = false;
 
 
 
     if (!event.msg.attachments.empty())
     {
         image_count = event.msg.attachments.size();
+        isScam = scamMessageScan.ScanMessage(bot,msg_id,author_id,channel_id,image_count,timestamp,attachments);
     }
 
     message_cache.insert({msg_id, {author_id, msg_content}});
-
-    bool isScam = scamMessageScan.ScanMessage(bot,msg_id,author_id,channel_id,image_count,timestamp,attachments);
-
+    
     if (isScam) {
         std::string link = "https://discord.com/channels/"
             + std::to_string(event.msg.guild_id)
@@ -835,8 +842,14 @@ void ModLogModule::onThreadCreate(const dpp::thread_create_t& event)
                             .set_emoji("❓")
                             .set_style(dpp::cos_primary)
                             .set_id("log_ask_button:" + thread_id.str())
-                    )
-                );
+                    ).add_component(
+                        dpp::component()
+                            .set_label("Note Issue")
+                            .set_type(dpp::cot_button)
+                            .set_emoji("✏️")
+                            .set_style(dpp::cos_primary)
+                            .set_id("issue_note_button:" + thread_id.str())
+                ));
 
                 bot.message_create(msg);
             });

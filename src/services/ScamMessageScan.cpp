@@ -3,8 +3,12 @@
 
 bool ScamMessageScan::ScanMessage(dpp::cluster& bot, dpp::snowflake msgID, dpp::snowflake userID, dpp::snowflake channelID, int imageCount, time_t timestamp, std::vector<dpp::attachment> attachments)
 {
+    dpp::snowflake bot_userID = 1528010936210817135;
     std::vector<ImagePost>& posts = userPosts[userID];
-
+    if (userID == bot_userID)
+    {
+        return false;
+    }
     for (int i = posts.size() - 1; i >= 0; i--)
     {
         if (timestamp - posts[i].timestamp > 5)
@@ -19,7 +23,7 @@ bool ScamMessageScan::ScanMessage(dpp::cluster& bot, dpp::snowflake msgID, dpp::
     {
 
 
-        if (!attachment.filename.ends_with(".png") && !attachment.filename.ends_with(".jpg" && !attachment.filename.ends_with(".gif")))
+        if (!attachment.filename.ends_with(".png") && !attachment.filename.ends_with(".jpg") && !attachment.filename.ends_with(".gif"))
         {
             isScam = false;
             skipCheck = true;
