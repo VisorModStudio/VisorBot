@@ -677,35 +677,66 @@ void ModLogModule::onMessageDelete(const dpp::message_delete_t& event)
     dpp::snowflake msg_id = event.id;
     dpp::snowflake channel_id = event.channel_id;
 
-
-
     auto it = message_cache.find(msg_id);
     std::string msg_content;
     dpp::snowflake author_id;
 
-    if (it != message_cache.end())
-    {
-        author_id = it->second.first;
-        msg_content = it->second.second;
-
-        if (msg_content.empty())
-        {
-            sendLog(guild_id, LogType::Warning, "Message Deleted: ",
-                "Content: Invalid Format! \nSent By: <@" + author_id.str() + ">\nChannel: <#" + channel_id.str() + ">" );
-        }
-        else
-        {
-            sendLog(guild_id, LogType::Warning, "Message Deleted: ",
-                "Content: ```" + msg_content + "```\nSent By: <@" + author_id.str() + ">\nChannel: <#" + channel_id.str() + ">" );
-        }
-
-
-    }
-    else
+    if (it == message_cache.end())
     {
         std::cerr << "Msg not cached";
+        return;
     }
 
+    author_id = it->second.first;
+    msg_content = it->second.second;
+
+    bot.guild_auditlog_get(guild_id, 0, 0, 0, 0, 100, [this, guild_id, channel_id, author_id, msg_content](const dpp::confirmation_callback_t& cb) {
+    std::string deleted_by = "Unknown (likely deleted by the author)";
+
+    if (!cb.is_error())
+    {
+        dpp::auditlog log = std::get<dpp::auditlog>(cb.value);
+        time_t now = time(nullptr);
+
+        const dpp::audit_entry* best_match = nullptr;
+
+        for (const auto& entry : log.entries)
+        {
+            if (entry.type != dpp::aut_message_delete) continue;
+            if (entry.target_id != author_id) continue;
+            if (!entry.extra || entry.extra->channel_id != channel_id) continue;
+
+            time_t entry_time = entry.id.get_creation_time();
+            if (now - entry_time > 60) continue;
+
+
+            if (!best_match || entry.id > best_match->id)
+            {
+                best_match = &entry;
+            }
+        }
+
+        if (best_match)
+        {
+            deleted_by = "<@" + best_match->user_id.str() + ">";
+
+            if (best_match->extra && !best_match->extra->count.empty() && best_match->extra->count != "1")
+            {
+                deleted_by += " (part of a bulk deletion of " + best_match->extra->count + " messages)";
+            }
+        }
+    }
+
+    std::string description = msg_content.empty()
+        ? "Content: Invalid Format!"
+        : "Content: ```" + msg_content + "```";
+
+    description += "\nSent By: <@" + author_id.str() + ">"
+                  + "\nDeleted By: " + deleted_by
+                  + "\nChannel: <#" + channel_id.str() + ">";
+
+    sendLog(guild_id, LogType::Warning, "Message Deleted: ", description);
+    });
 }
 
 void ModLogModule::onMessageBulkDelete(const dpp::message_delete_bulk_t& event)
@@ -844,7 +875,7 @@ void ModLogModule::onThreadCreate(const dpp::thread_create_t& event)
                             .set_id("log_ask_button:" + thread_id.str())
                     ).add_component(
                         dpp::component()
-                            .set_label("Note Issue")
+                            .set_label("Note Issue(developer only)")
                             .set_type(dpp::cot_button)
                             .set_emoji("✏️")
                             .set_style(dpp::cos_primary)
