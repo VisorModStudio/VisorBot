@@ -67,7 +67,7 @@ class ModLogModule : public EventModule {
     void onMessageDelete(const dpp::message_delete_t& event);
     void onMessageCreate(const dpp::message_create_t& event);
     void onMessageBulkDelete(const dpp::message_delete_bulk_t& event);
-    //
+    void onMessageEdit(const dpp::message_update_t& event);
 
     void onThreadCreate(const dpp::thread_create_t& event);
 

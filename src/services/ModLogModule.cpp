@@ -136,6 +136,11 @@ void ModLogModule::registerHandlers() {
         onThreadCreate(event);
     });
 
+    bot.on_message_update([this](const dpp::message_update_t& event)
+    {
+        onMessageEdit(event);
+    });
+
 
 
 
@@ -814,7 +819,6 @@ void ModLogModule::onMessageBulkDelete(const dpp::message_delete_bulk_t& event)
     flush_embed();
 }
 
-
 void ModLogModule::onThreadCreate(const dpp::thread_create_t& event)
 {
     dpp::snowflake thread_id = event.created.id;
@@ -996,4 +1000,50 @@ void ModLogModule::onThreadCreate(const dpp::thread_create_t& event)
             }
         });
     }
+}
+
+void ModLogModule::onMessageEdit(const dpp::message_update_t& event)
+{
+    dpp::snowflake user_id = event.msg.author.id;
+    dpp::snowflake guild_id = event.msg.guild_id;
+    dpp::snowflake msg_id = event.msg.id;
+
+    std::string link = "https://discord.com/channels/"
+            + std::to_string(event.msg.guild_id)
+            + "/" + std::to_string(event.msg.channel_id)
+            + "/" + std::to_string(event.msg.id);
+
+
+    auto it = message_cache.find(msg_id);
+
+    if (it == message_cache.end())
+    {
+        std::cerr << "Msg not cached";
+        return;
+    }
+
+    std::string before_content = it->second.second;
+    std::string after_content = event.msg.content;
+
+    sendLog(guild_id, LogType::Info, "Message Edited:",
+        "Before: ```" + before_content +
+        "```\nAfter:``` " + after_content + "```\n"
+        "By: <@" + user_id.str() + ">\n Message: " + link);
+
+    /*
+    * auto it = message_cache.find(msg_id);
+    std::string msg_content;
+    dpp::snowflake author_id;
+
+    if (it == message_cache.end())
+    {
+        std::cerr << "Msg not cached";
+        return;
+    }
+
+    author_id = it->second.first;
+    msg_content = it->second.second;
+     *
+     *
+     */
 }
