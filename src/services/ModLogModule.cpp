@@ -1025,25 +1025,13 @@ void ModLogModule::onMessageEdit(const dpp::message_update_t& event)
     std::string before_content = it->second.second;
     std::string after_content = event.msg.content;
 
-    sendLog(guild_id, LogType::Info, "Message Edited:",
-        "Before: ```" + before_content +
-        "```\nAfter:``` " + after_content + "```\n"
+    if (before_content != after_content)
+    {
+        sendLog(guild_id, LogType::Info, "Message Edited:",
+        "Before:```" + before_content +
+        "```\nAfter:```" + after_content + "```\n"
         "By: <@" + user_id.str() + ">\n Message: " + link);
 
-    /*
-    * auto it = message_cache.find(msg_id);
-    std::string msg_content;
-    dpp::snowflake author_id;
-
-    if (it == message_cache.end())
-    {
-        std::cerr << "Msg not cached";
-        return;
+        it->second.second = after_content;
     }
-
-    author_id = it->second.first;
-    msg_content = it->second.second;
-     *
-     *
-     */
 }
