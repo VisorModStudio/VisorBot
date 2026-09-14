@@ -920,13 +920,17 @@ void ModLogModule::onThreadCreate(const dpp::thread_create_t& event)
                         return std::tolower(a) == std::tolower(b);
                     });
             };
-
-            auto sendFaqAnswer = [this, thread_id](std::string answer) {
+            std::string noInfo_answer = gemini.noInfo_answer;
+            auto sendFaqAnswer = [this, thread_id, noInfo_answer](std::string answer) {
                 dpp::embed embed = dpp::embed()
                     .set_color(dpp::colors::blurple)
                     .set_title("Visor-Wiki")
                     .set_description(answer);
-                bot.message_create(dpp::message(thread_id, embed));
+                if (answer != noInfo_answer) //I know this is a shit implementation because it relies on AI not being dumb, but atm im dumb and can't think of another approach
+                {
+                    bot.message_create(dpp::message(thread_id, embed));
+                }
+
             };
 
             if (attachments.empty()) {
@@ -954,7 +958,7 @@ void ModLogModule::onThreadCreate(const dpp::thread_create_t& event)
 
 
                 if (msg.content.empty() && combinedLogs.empty()) {
-                    bot.log(dpp::ll_debug, "Thread " + thread_id.str() + ": no text/log content found, skipping Gemini request.");
+                    bot.log(dpp::ll_debug, "Thread " + thread_id.str() + ": no text/log content found, skipping FAQ request.");
                     sendFaqAnswer("I couldn't find a text question or log file. Please describe your issue in text as well.");
                     return;
                 }

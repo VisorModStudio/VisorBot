@@ -15,6 +15,7 @@ class GeminiClient
     void answer_faq(const std::string& user_question, const std::string& faq_data, std::function<void(std::string)> callback);
     void custom_request(const std::string& request,std::function<void(std::string)> callback);
     std::string fetch_website_info(const std::string& url);
+    std::string noInfo_answer = "This information is not available in the FAQ. A staff member will review your question.";
 
 
     private:

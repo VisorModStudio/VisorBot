@@ -69,18 +69,20 @@ void GeminiClient::summarize_post(const std::string& title, const std::string& c
 }
 
 void GeminiClient::answer_faq(const std::string& user_question, const std::string& faq_data, std::function<void(std::string)> callback) {
+
+
     std::string prompt = std::string(R"(You are a support assistant that answers user questions using ONLY the FAQ data provided below.
 
             Rules:
             1. Search FAQ for relevant info.
             2. If found: quote verbatim, no paraphrasing/summarizing/added words.
-            3. If not found OR unsure whether an answer exists: respond exactly "This information is not available in the FAQ. A staff member will review your question."
+            3. If not found OR unsure whether an answer exists: respond exactly )") + noInfo_answer + R"(
             4. No commentary, opinions, greetings, or explanations.
             5. Tone: neutral, factual; no emotional language, exclamation marks, or filler.
             6. If a Minecraft log is posted (Discord link or site linking to one): review log, identify cause, check FAQ for a possible fix.
 
             --- FAQ DATA START ---
-            )") + faq_data + "\n--- FAQ DATA END ---\n\n--- USER QUESTION START ---\n" + user_question + "\n--- USER QUESTION END ---";
+            )" + faq_data + "\n--- FAQ DATA END ---\n\n--- USER QUESTION START ---\n" + user_question + "\n--- USER QUESTION END ---";
 
     generate_text(prompt, callback);
 }
