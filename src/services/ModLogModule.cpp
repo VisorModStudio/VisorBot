@@ -634,22 +634,22 @@ void ModLogModule::onMessageCreate(const dpp::message_create_t& event)
     dpp::message msg;
     dpp::embed embed;
     dpp::snowflake logchannel = getColumnFromServerConfig(guild_id, "ModChannelID");
-    bool isScam = false;
+    std::string scamChannel = "0";
 
 
 
     if (!event.msg.attachments.empty())
     {
         image_count = event.msg.attachments.size();
-        isScam = scamMessageScan.ScanMessage(bot,msg_id,author_id,channel_id,image_count,timestamp,attachments);
+        scamChannel = scamMessageScan.ScanMessage(bot,msg_id,author_id,channel_id,image_count,timestamp,attachments);
     }
 
     message_cache.insert({msg_id, {author_id, msg_content}});
-    
-    if (isScam) {
+
+    if (scamChannel != "0") {
         std::string link = "https://discord.com/channels/"
             + std::to_string(event.msg.guild_id)
-            + "/" + std::to_string(event.msg.channel_id)
+            + "/" + scamChannel
             + "/" + std::to_string(event.msg.id);
 
         embed.set_title("Scam Detected!");

@@ -56,13 +56,13 @@ class ModLogModule : public EventModule {
     void onMemberUnban(const dpp::guild_ban_remove_t& event);
     void onRoleCreate(const dpp::guild_role_create_t& event);
     void onRoleDelete(const dpp::guild_role_delete_t& event);
+    //todo role update
     void onChannelCreate(const dpp::channel_create_t& event);
     void onChannelDelete(const dpp::channel_delete_t& event);
     void onChannelUpdate(const dpp::channel_update_t& event);
     void onMemberRemove(const dpp::guild_member_remove_t& event);
     void onInviteCreate(const dpp::invite_create_t& event);
     void onInviteDelete(const dpp::invite_delete_t& event);
-    //TODO Webhook
     void onGuildEmojisUpdate(const dpp::guild_emojis_update_t& event);
     void onMessageDelete(const dpp::message_delete_t& event);
     void onMessageCreate(const dpp::message_create_t& event);

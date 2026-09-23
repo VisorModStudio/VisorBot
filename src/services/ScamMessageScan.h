@@ -15,7 +15,7 @@ class ScamMessageScan
 
 {
 public:
-    bool ScanMessage(dpp::cluster& bot, dpp::snowflake msgID, dpp::snowflake userID, dpp::snowflake channelID, int imageCount,
+    std::string ScanMessage(dpp::cluster& bot, dpp::snowflake msgID, dpp::snowflake userID, dpp::snowflake channelID, int imageCount,
         time_t timestamp, std::vector<dpp::attachment> attachments);
 
 
