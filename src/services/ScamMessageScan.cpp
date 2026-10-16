@@ -7,8 +7,7 @@ std::string ScamMessageScan::ScanMessage(dpp::cluster& bot, dpp::snowflake msgID
     std::vector<ImagePost>& posts = userPosts[userID];
     static std::string blacklistMsgID;
     static std::string blacklistUserID;
-    //static blacklisted 1. message id(doenst get deleted), static black listed user
-    //todo make if user Scanned as scammer -> ignore further
+
 
     if (userID == bot_userID)
     {

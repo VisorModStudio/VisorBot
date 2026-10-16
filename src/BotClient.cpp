@@ -77,8 +77,5 @@ bool BotClient::userHasAdminPermission(dpp::snowflake user_id)
     bool has_perms = false;
 
 
-
-
-
     return has_perms;
 }

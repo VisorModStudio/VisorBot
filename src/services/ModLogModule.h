@@ -8,6 +8,9 @@
 #include "GeminiClient.h"
 #include "KnowledgeCache.h"
 #include "ScamMessageScan.h"
+#include "DB.h"
+#include "ClickHandler.h"
+#include "GameLogHelper.h"
 
 enum class LogType
 {
@@ -29,10 +32,14 @@ enum class ObjectType
 class ModLogModule : public EventModule {
     private:
     BotClient& bot;
-    sqlite3* db;
+    sqlite3* sqlite;
     GeminiClient& gemini;
     KnowledgeCache& knowledgeCache;
     ScamMessageScan& scamMessageScan;
+    DB db;
+    ClickHandler clickHandler;
+    GameLogHelper gameLogHelper;
+
 
 
 
@@ -48,8 +55,14 @@ class ModLogModule : public EventModule {
     void sendLog(dpp::snowflake guild_id, LogType type, const std::string& title, const std::string& description);
 
 
-    void onButtonClick(const dpp::button_click_t& event);
-    void onSelectClick(const dpp::select_click_t& event);
+    void onButtonClick(const dpp::button_click_t& event)
+    {
+        clickHandler.onButtonClick(event);
+    };
+    void onSelectClick(const dpp::select_click_t& event)
+    {
+        clickHandler.onSelectClick(event);
+    };
 
     void onMemberJoin(const dpp::guild_member_add_t& event);
     void onMemberBan(const dpp::guild_ban_add_t& event);
@@ -76,14 +89,10 @@ class ModLogModule : public EventModule {
 
     public:
 
-
-    dpp::snowflake getColumnFromServerConfig(dpp::snowflake guild_id, std::string column) const;
-    std::string getStringColumnFromServerConfig(dpp::snowflake guild_id, std::string column) const;
-
-
-
-    ModLogModule(BotClient& bot_ref, sqlite3* db_ref, GeminiClient& gemini_ref, KnowledgeCache& knowledgeCache_ref,ScamMessageScan& scamMessageScan_ref)
-        : bot(bot_ref), db(db_ref), gemini(gemini_ref), knowledgeCache(knowledgeCache_ref), scamMessageScan(scamMessageScan_ref)
+    ModLogModule(BotClient& bot_ref, sqlite3* sqlite_ref, GeminiClient& gemini_ref, KnowledgeCache& knowledgeCache_ref,ScamMessageScan& scamMessageScan_ref)
+        : bot(bot_ref), sqlite(sqlite_ref), gemini(gemini_ref), knowledgeCache(knowledgeCache_ref),
+          scamMessageScan(scamMessageScan_ref), db(sqlite_ref),
+          clickHandler(bot_ref), gameLogHelper(bot_ref)
     {
     }
 

@@ -13,6 +13,7 @@
 #include "../services/ScamMessageScan.h"
 
 
+
 int main()
 {
 
@@ -28,6 +29,8 @@ int main()
 
     ModLogModule modLog(bot, bot.getDB(), gemini, bot.knowledgeCache, scamMessageScan);
     modLog.registerHandlers();
+
+    DB db(bot.getDB());
 
 
     std::map<std::string, std::unique_ptr<Command>> commands;
@@ -46,7 +49,7 @@ int main()
     commands[set_knowledge_source_name] = std::move(set_knowledge_source);
 
 
-    bot.on_slashcommand([&commands, &bot, modLog](const dpp::slashcommand_t& event)
+    bot.on_slashcommand([&commands, &bot, &db](const dpp::slashcommand_t& event)
     {
         std::string cmd_name = event.command.get_command_name();
 
@@ -63,7 +66,7 @@ int main()
             dpp::snowflake guild_id = event.command.get_guild().id;
             std::string my_id = "1435661653176746155";
             dpp::permission userDiscordPermission = event.command.get_resolved_permission(user_id);
-            dpp::snowflake BotAccessRole = modLog.getColumnFromServerConfig(guild_id, "BotAccessRole");
+            dpp::snowflake BotAccessRole = db.getColumnFromServerConfig(guild_id, "BotAccessRole");
             const std::vector<dpp::snowflake>& member_roles = event.command.member.get_roles();
 
             bool has_role = std::find(member_roles.begin(), member_roles.end(), BotAccessRole) != member_roles.end();

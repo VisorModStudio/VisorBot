@@ -33,6 +33,12 @@ add_executable(VisorBot src/main.cpp
         src/services/Logfetcher.h
         src/services/ScamMessageScan.cpp
         src/services/ScamMessageScan.h
+        src/services/DB.cpp
+        src/services/DB.h
+        src/services/ClickHandler.cpp
+        src/services/ClickHandler.h
+        src/services/GameLogHelper.cpp
+        src/services/GameLogHelper.h
 )
 
 target_include_directories(VisorBot PRIVATE
