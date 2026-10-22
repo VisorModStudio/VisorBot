@@ -3,11 +3,9 @@
 
 class DB
 {
-
     private:
 
     sqlite3* db;
-
 
     public:
 

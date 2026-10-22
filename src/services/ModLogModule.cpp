@@ -215,7 +215,31 @@ void ModLogModule::onChannelDelete(const dpp::channel_delete_t& event)
     std::string channel_name = event.deleted.name;
     dpp::snowflake channel_id = event.deleted.id;
 
-    sendLogWithAudit(guild_id, AuditLogEvent::ChannelDelete, channel_id, "Channel Deleted: ", ObjectType::Channel, LogType::Warning);
+    //sendLogWithAudit(guild_id, AuditLogEvent::ChannelDelete, channel_id, "Channel Deleted: ", ObjectType::Channel, LogType::Warning);
+
+    bot.guild_auditlog_get(guild_id, 0, static_cast<int>(AuditLogEvent::ChannelDelete), 0, 0, 5,
+        [this, guild_id, channel_id, channel_name](const dpp::confirmation_callback_t& callback)
+        {
+            if (callback.is_error())
+            {
+                std::cerr << "Audit log fetch failed: " << callback.get_error().message << std::endl;
+                return;
+            }
+
+            dpp::auditlog audit = std::get<dpp::auditlog>(callback.value);
+
+            for (const auto& entry : audit.entries)
+            {
+                if (entry.target_id == channel_id)
+                {
+                    std::string deleted_by = (entry.user_id == 0) ? "No staff" : entry.user_id.str();
+                    std::string title = "Channel Deleted: ";
+                    std::string description = "Channel Name: " + channel_name + "\nBy: <@" + deleted_by + ">";
+                    sendLog(guild_id, LogType::Alert, title, description);
+                    return;
+                }
+            }
+        });
 }
 
 void ModLogModule::onMemberRemove(const dpp::guild_member_remove_t& event)
