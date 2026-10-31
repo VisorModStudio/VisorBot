@@ -39,6 +39,8 @@ add_executable(VisorBot src/main.cpp
         src/services/ClickHandler.h
         src/services/GameLogHelper.cpp
         src/services/GameLogHelper.h
+        src/commands/GameLogHelperCommand.cpp
+        src/commands/GameLogHelperCommand.h
 )
 
 target_include_directories(VisorBot PRIVATE

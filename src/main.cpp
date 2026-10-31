@@ -2,6 +2,8 @@
 #include <iostream>
 #include <memory>
 #include <map>
+
+#include "GameLogHelperCommand.h"
 #include "../BotClient.h"
 #include "../Command.h"
 #include "../services/ModLogModule.h"
@@ -11,7 +13,7 @@
 #include "../services/GeminiClient.h"
 #include "../services/KnowledgeCache.h"
 #include "../services/ScamMessageScan.h"
-
+#include "commands/GameLogHelperCommand.h"
 
 
 int main()
@@ -47,6 +49,10 @@ int main()
     auto set_knowledge_source = std::make_unique<SetKnowledgeSource>(bot, bot.knowledgeCache);
     std::string set_knowledge_source_name = set_knowledge_source->getName();
     commands[set_knowledge_source_name] = std::move(set_knowledge_source);
+
+    auto game_log_helper = std::make_unique<GameLogHelperCommand>(bot);
+    std::string game_log_helper_name = game_log_helper->getName();
+    commands[game_log_helper_name] = std::move(game_log_helper);
 
 
     bot.on_slashcommand([&commands, &bot, &db](const dpp::slashcommand_t& event)
