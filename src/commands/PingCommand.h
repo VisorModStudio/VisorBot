@@ -12,6 +12,8 @@ public:
     std::string getDescription() const override;
     void execute(const dpp::slashcommand_t& event) override;
 
+    bool requiresAdmin() const override{return false;}
+
 
 
 };

@@ -1,9 +1,9 @@
-#include "GameLogHelperCommand.h"
+#include "GameLogHelper.h"
 
 
 
 
-dpp::message GameLogHelperCommand::getLogHelpMsg(dpp::snowflake channelID)
+dpp::message GameLogHelper::getLogHelpMsg(dpp::snowflake channelID)
 {
     dpp::embed embed = dpp::embed()
                     .set_color(dpp::colors::blurple)
@@ -24,7 +24,7 @@ dpp::message GameLogHelperCommand::getLogHelpMsg(dpp::snowflake channelID)
     return msg;
 };
 
-void GameLogHelperCommand::sendLogHelpMsg(const dpp::message& msg)
+void GameLogHelper::sendLogHelpMsg(const dpp::message& msg)
 {
     bot.message_create(msg);
 }
